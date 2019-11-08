@@ -120,7 +120,7 @@ resolution = 0.01 * muHz
 # dt = 120  # seconds, TESS sample rate
 # nyquist = 1/(2*dt)  # Nyquist frequency
 # resolution = nyquist / 10000
-examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 2250 * muHz, resolution)  # Function call to
+examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 1000 * muHz, resolution)  # Function call to
 # examine around the indicated points. Is done in a broad interval (2*500 mikroHz), so the practically all of the
 # relevant parts of the interval. Generally only 1 frequency to examine around is used because of this.
 

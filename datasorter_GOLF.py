@@ -24,5 +24,5 @@ print('flux_data.shape', flux_data.shape)
 
 
 inpt = input('What name for the saved data? (exclude .dat)')
-print(int(990*len(flux_data)/1000))
-writer2col(inpt, time_jd[int(985*len(time_jd)/1000):len(time_jd)], flux_data[int(985*len(flux_data)/1000):len(flux_data)])
+print(int(995*len(flux_data)/1000))
+writer2col(inpt, time_jd[int(995*len(time_jd)/1000):len(time_jd)], flux_data[int(995*len(flux_data)/1000):len(flux_data)])

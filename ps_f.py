@@ -365,8 +365,9 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
         # # Zhu Li, do the thing
 
         # Calculate sine and cosine function part values
-        sin = y * np.sin(np.dot(freq, t))
-        cos = y * np.cos(np.dot(freq, t))
+        product = np.matmul(freq, t)
+        sin = y * np.sin(product)
+        cos = y * np.cos(product)
         sin2 = np.power(sin, 2)
         cos2 = np.power(cos, 2)
         sincos = sin * cos
