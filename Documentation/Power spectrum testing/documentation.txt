@@ -1,0 +1,1 @@
+Power spectrum functions are tested by using a sine-function. In sine-remeasured, the function to examine specific frequencies is used to resolve the peak better.

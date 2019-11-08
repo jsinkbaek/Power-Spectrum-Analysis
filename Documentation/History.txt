@@ -1,0 +1,94 @@
+Created program to load data, sort out measurements flagged by detector as bad, and save in a simpler format. (datasorter.py)
+
+
+
+Created script (data_filterer) that:
+- Removes first and last 25 points for safety (uncertainties from detector were unreasonable)
+
+- Can either delete data in an interval between two points (graphical selection), or delete data via automatic
+  selection by selecting intervals of 40 datapoints, grading the interval based on the amount of points further out 
+  than n standard deviations, and deleting the interval if it has a certain amount of marks (grade). Currently, only 
+  manual selections is used, as the certainty of the second method in producing similar results has not been confirmed 
+  yet. It could potentially be confirmed by plotting the intervals that are up for deletion along with the regular 
+  dataset, and examining manually (but then we might as well just manually delete intervals with bad data).
+
+- Does median filtering, 
+    - First step finds median of point from surrounding 9 points (including itself). (Note, this step  
+      automatically cuts away 4-5 endpoints after it is done, because no median is found for them)
+        - See figure rdata_bcutdata_gmedian.png. red is uncut data, blue is cut data, green is median data.
+
+    - Next step finds variance of points from their respective median.
+
+    - Variance is plotted against time, as well as sorted variance, and n*standard deviations of data is removed 
+      (n is decided by examination of graphs, in order to cut away outliers in v/t, or tails in s-v.)
+      (In nu indi star, 3std was enough to make sure no localized spikes in variance was found.)
+        - See figures:
+            variance_from_median.png (variance with all points as a function of time)
+            sorted_variance.png (sorted variance with all points)
+            sorted_variance_3std.png (sorted variance, where data beyond 3 standard deviations is removed)
+            variance_3std.png (variance as a function of time, with data beyond 3 std removed)
+
+    - It saves the filtered data (time s and corrected flux ppm), along with medians and variance, in new file
+
+
+
+
+Created script (ps_f.py) that only contains functions needed for generating powerspectra and examining them
+
+- Function reader, to read data made by data_filterer.py
+    
+- Function pfunctions, which is a function used to generate the sums s,c,ss,cc,sc necessary for our discrete
+  analysis with irregular timesteps. It can only be used to generate a spectrum with fixed distance between each
+  frequency. It is used in other scripts to go through the whole data frequency range needed, and create a crude 
+  powerspectrum to be further examined. As input it takes ydata (arbitrary function), xdata (x, t, similar),
+  maximum frequency for it meant to be set as the nyquist frequency in angular units (we are only interested in 
+  frequencies between 0 and nyquist frequency, excluding both), amount of steps (called spacing), and a factor k,
+  which is set to limit the max frequency we actually stop at (k = 0.5 means we stop when we have reached frequency 
+  0.5*nyquist).
+
+- Function psummer, that simply takes the resulting sums created by pfunctions (or similar), and from them, creates
+  values for alpha-factor, beta-factor and power-spectrum for each frequency given. Input is lists, s, c, ss, cc, sc.
+
+- Function pspectrum, that subtracts mean from data, calls the two previous functions (pfunctions, psummer) on the
+  corrected data, converts frequencies into cyclical units (from angular), and returns frequency, powerspectrum, 
+  and alpha and beta coefficients.
+
+- Function frequency_examiner, that does exactly the same as pfunctions and psummer, however, it can do so for
+  intervals around multiple specific frequencies (separately). It requires function data, time / x, a list of 
+  frequencies to explore around, a half-width of the interval (actually written as width by mistake), and a wished
+  resolution.
+  This function is intentioned only to be used for specific frequencies, e.g. in small intervals, and only after the
+  full, crude spectrum has been made. This is because you specify frequency resolution in the function, and not
+  total amounts of steps, so if used on a larger dataset it will take ages.
+
+- Three functions, pwriter, preader, dreader, used to write and read .dat-files with spectrum data in, and read 
+  regular data files, respectively.
+
+- Mathematical functions to be used for fitting 
+
+
+Created script (ps_test.py) in order to test the functions in ps_f.py, as well as the methods used in actual examination. It is meant to be a mirror of the script ps_run.py, that is used to actually examine stellar data. However, ps_test.py generates values from a sine-function instead, which has a known power-spectrum.
+
+- Function pspectrum is used with a given amount of steps to generate a crude spectrum seen on          
+  sine_angular_spectrum.png. To see the resolution, a zoom in plot is given on sine_angular_spectrum_zoom.png.
+  Here we get the expected spectrum, but not the best resolution. So the functions used by pspectrum, pfunctions and
+  psummer, do what we ask them to.
+
+- Next, the area around the peak is examined further with a higher resolution, by using the function
+  frequency_examiner. The zoomed in result can be seen in sine_remeasured.png, where the blue line represents the
+  spectrum when using frequency_examiner, and the red line is the older, cruder powerspectrum from pspectrum.
+  So the function frequency_examiner also behaves as expected.
+
+
+
+Created script (ps_run.py) that does the same as ps_test.py, but for inputted stellar data. However, more functionality has been included here. F.ex., the script saves crude spectrum, as well as specified frequency examinations. The first spectrum can be loaded in the script instead of repeating calculation of the whole power spectrum again. The second is intended as the output of the script, as we are interested in some high-res calculations at specific frequencies relevant to the star.
+
+
+Created script spectrum_generator, that is supposed to reconstruct the data-set by using sine and cosine functions with the beta and alpha values from the powerspectrum. A simply sine function is used to test it. Does not currently work as intended (as can be seen when trying to reconstruct a sine function from its powerspectrum), because it does not apply the theory correctly:
+-Only peak values are used, not the frequencies just beside, or the rest of the spectrum. This is also the intention with the script, as it's supposed to examine how well we can reconstruct the signal only by using the peak signals. But in this case, the answer is "not very well".
+-Should probably be replaced with a form of discrete fourier transform, where we can select slightly broader intervals (as it is not just the top of the peaks that contributes, but the frequencies around the peaks too, as well as noise signals, smaller peaks, and similar).
+
+Created script ps_plotter.py, that will in general be used to make power spectrum plots, but can currently also plot cflux from nuindus. This is primarily an active workspace script, that is subject to change should the need for a specific plot arise.
+
+Created script ps_fitting.py, which can currently fit a single lorentzian noise function to an interval specified by graphical input, in order to reduce apparrant noise in the powerspectrum. It does this by using an external scipy function "curve_fit". Currently, it can both fit the function to all data in the interval, or only peak data in the interval (resulting in a higher fit).
+
