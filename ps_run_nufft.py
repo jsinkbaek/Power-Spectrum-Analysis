@@ -2,6 +2,7 @@ import math
 import ps_f
 import matplotlib.pyplot as plt
 import nufftpy
+import numpy as np
 
 # # Input an call to load data set from file
 print('What is the filename? (No file extension)')
@@ -27,7 +28,7 @@ muHz = 0.000001  # Variable for converting to microHz
 
 # # Frequency calculation
 resolution = 0.01 * muHz  # 0.01 normal
-halfwidth = 1000 * muHz * 2 * math.pi  # in angular frequency
+halfwidth = 6000 * muHz
 steps = int((2 * halfwidth) / resolution)
 freq = nufftpy.nufftfreqs(steps, df=resolution)
 freq = freq[len(freq)//2:-1]
@@ -36,7 +37,12 @@ freq = freq[len(freq)//2:-1]
 
 result = nufftpy.nufft1(tid, cflux, steps, df=(resolution * 2 * math.pi))
 result = result[len(result)//2:-1]
-print(result[1:5])
-plt.plot(freq, result.real ** 2)
+
+spectral_power = result.real ** 2 + result.imag ** 2
+
+plt.plot(freq, spectral_power)
 plt.show()
+
+inpt2 = input('Name of file to save spectrum in?')
+ps_f.pwriter(inpt2, freq, spectral_power, result.real, result.imag)
 

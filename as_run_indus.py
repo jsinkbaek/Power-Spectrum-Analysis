@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from detect_peaks import detect_peaks
 import as_f
+import math
 
 plt.rcParams.update({'font.size': 22})  # Changes font size for all plots
 
@@ -41,11 +42,11 @@ freq_muHz = [x / muHz for x in freq]
 
 
 # # Data plot and interval select
-# plt.plot(p)
-# [coord1, coord2] = plt.ginput(n=2, timeout=0, show_clicks=True, mouse_add=1, mouse_stop=3, mouse_pop=2)
-# plt.close()
-# [coord1, coord2] = [int(coord1[0]), int(coord2[0])]
-[coord1, coord2] = [13777, 57688]  # Hardcoded for repetition, used commented out part to determine
+plt.plot(p)
+[coord1, coord2] = plt.ginput(n=2, timeout=0, show_clicks=True, mouse_add=1, mouse_stop=3, mouse_pop=2)
+plt.close()
+[coord1, coord2] = [int(coord1[0]), int(coord2[0])]
+# [coord1, coord2] = [13777, 57688]  # Hardcoded for repetition, used commented out part to determine
 freq_old = freq_muHz
 freq_muHz = freq_muHz[coord1:coord2]
 
@@ -64,7 +65,7 @@ plt.show()
 # Assumes that p is a signal-to-noise ratio already. Otherwise use as_run.py
 
 # Function call, peak index finder, requires min. 6 signal/noise ratio
-sn_limit = 6
+sn_limit = 16  # normally 6
 indices_peaks = detect_peaks(p, mph=sn_limit, show=False)
 
 # Peak values and frequencies found
@@ -130,7 +131,7 @@ plt.plot(freq_ac1, ac1)
 plt.plot(freq_ac1_peak, ac1_peak, 'r*', markersize=7)
 plt.xlabel('Frequency [microHz]')
 plt.ylabel('Autocorrelation')
-plt.xlim([-1, 110])
+# plt.xlim([-1, 110])
 
 # Select autocorr frequencies for small frequency separation
 values = plt.ginput(n=-1, timeout=0, show_clicks=True, mouse_add=1, mouse_stop=3, mouse_pop=2)
@@ -189,7 +190,7 @@ plt.legend(['Autocorrelation', 'Peaks', 'Peaks selected to find small frequency 
             'Small frequency separation'])
 plt.xlabel('Frequency [microHz]')
 plt.ylabel('Autocorrelation')
-plt.xlim([-1, 110])
+# plt.xlim([-1, 110])
 plt.show()
 
 
@@ -272,7 +273,7 @@ plt.plot(freq_ac2_peak, ac2_peak, 'g.', markersize=7)
 plt.plot(large_freq, ac2_large_freq, 'r*', markersize=10)
 plt.legend(['Autocorrelation from power/noise peaks', 'Found autocorrelation peaks',
             'Selected large frequency separation peaks'])
-plt.xlim([-1, 110])
+# plt.xlim([-1, 110])
 plt.xlabel('Frequency [microHz]')
 plt.ylabel('Autocorrelation')
 plt.show()
@@ -286,10 +287,10 @@ modulus = float(modulus)
 
 # Calculate logarithmic weights from peak height
 base = 2
-# weights_peak = [math.log(x, base) for x in p_peaks]
-weights_peak = [x ** 0.75 for x in p_peaks]
-weights_full = [x ** 0.75 for x in p]
-# weights_full = [math.log(x, base) for x in p]
+weights_peak = [math.log(x, base) for x in p_peaks]
+# weights_peak = [x ** 0.75 for x in p_peaks]
+# weights_full = [x ** 0.75 for x in p]
+weights_full = [math.log(x, base) for x in p]
 
 # Call echelle2 with peak data
 degree_coords = as_f.echelle2(freq_muHz_peaks, modulus, heatmap=True, weights=weights_peak,
