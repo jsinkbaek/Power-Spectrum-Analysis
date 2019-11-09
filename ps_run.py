@@ -116,11 +116,11 @@ for k in range(0, len(coords)):
 
 
 # # Frequency examination
-resolution = 0.1 * muHz  # 0.01 normal
+resolution = 0.01 * muHz  # 0.01 normal
 # dt = 120  # seconds, TESS sample rate
 # nyquist = 1/(2*dt)  # Nyquist frequency
 # resolution = nyquist / 10000
-examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 100 * muHz, resolution)  # Function call to
+examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 2000 * muHz, resolution)  # Function call to
 # examine around the indicated points. Is done in a broad interval (2*500 mikroHz), so the practically all of the
 # relevant parts of the interval. Generally only 1 frequency to examine around is used because of this.
 
