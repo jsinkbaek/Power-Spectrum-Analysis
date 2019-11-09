@@ -393,7 +393,7 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             cos2 = np.zeros(step_amnt)
             sincos = np.zeros(step_amnt)
 
-            chunk_size = 500
+            chunk_size = 1000
             freq = np.ascontiguousarray(freq)
             t = np.ascontiguousarray(t)
             for i in range(0, step_amnt, chunk_size):

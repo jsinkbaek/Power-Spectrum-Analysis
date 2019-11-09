@@ -116,14 +116,14 @@ for k in range(0, len(coords)):
 
 
 # # Frequency examination
-resolution = 0.01 * muHz  # 0.01 normal
-# dt = 120  # seconds, TESS sample rate
-# nyquist = 1/(2*dt)  # Nyquist frequency
-# resolution = nyquist / 10000
+resolution = 0.1 * muHz  # 0.01 normal
+halfwidth = 2000 * muHz * 2 * math.pi  # in angular frequency
+steps = int((2 * halfwidth) / resolution)
+
+
 examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 2000 * muHz, resolution)  # Function call to
 # examine around the indicated points. Is done in a broad interval (2*500 mikroHz), so the practically all of the
 # relevant parts of the interval. Generally only 1 frequency to examine around is used because of this.
-
 plt.plot(freq_mHz, p, 'r')  # plot the crude power spectrum to compare with below plots
 
 for h in range(0, len(examined_results)):  # loop to plot and save all the spectrum intervals examined
@@ -134,8 +134,9 @@ for h in range(0, len(examined_results)):  # loop to plot and save all the spect
 
     # # Plot current loop results, and save them to file with added number indicating current loop
     plt.plot(freq_exam_mHz, p_exam)
-    ps_f.pwriter(inpt1+'_ps_ex'+str(h), freq_exam, p_exam, alp_exam, bet_exam)
+    ps_f.pwriter(inpt1 + '_ps_ex' + str(h), freq_exam, p_exam, alp_exam, bet_exam)
 
 plt.xlabel('Cyclical frequency (muHz)')
 plt.ylabel('Power Spectrum')
 plt.show()
+
