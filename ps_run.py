@@ -106,7 +106,7 @@ plt.xlabel('Cyclical frequency [muHz]')
 plt.ylabel('Power Spectrum')
 plt.title('Select frequencies to examine')
 coords = plt.ginput(n=-1, timeout=0, show_clicks=True, mouse_add=1, mouse_stop=3, mouse_pop=2)  # coordinates of cursor
-
+plt.close()
 
 # # Convert input(s) to list elements indicating only the frequency selected
 frequencies = [None] * len(coords)  # Preload list of frequencies to examine around
@@ -116,11 +116,11 @@ for k in range(0, len(coords)):
 
 
 # # Frequency examination
-resolution = 0.01 * muHz
+resolution = 0.1 * muHz  # 0.01 normal
 # dt = 120  # seconds, TESS sample rate
 # nyquist = 1/(2*dt)  # Nyquist frequency
 # resolution = nyquist / 10000
-examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 1000 * muHz, resolution)  # Function call to
+examined_results = ps_f.create_pspectrum(cflux, tid, frequencies, 100 * muHz, resolution)  # Function call to
 # examine around the indicated points. Is done in a broad interval (2*500 mikroHz), so the practically all of the
 # relevant parts of the interval. Generally only 1 frequency to examine around is used because of this.
 
