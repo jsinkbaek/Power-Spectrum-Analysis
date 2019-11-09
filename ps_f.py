@@ -368,76 +368,49 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
         # Calculate sine and cosine function part values
         print(freq.shape)
         print(t.shape)
-        if False:
-            try:
-                product = np.matmul(freq, t)
-                sin = y * np.sin(product)
-                cos = y * np.cos(product)
-                sin2 = np.power(sin, 2)
-                cos2 = np.power(cos, 2)
-                sincos = sin * cos
-                print('sin.shape', sin.shape)
+        try:
+            product = np.matmul(freq, t)
+            sin = np.sin(product)
+            cos = np.cos(product)
+            sin2 = sin ** 2
+            cos2 = cos ** 2
+            sincos = sin * cos
+            print('sin.shape', sin.shape)
 
-                # Sum together values for different t
-                sin = np.sum(sin, 1)
-                cos = np.sum(cos, 1)
-                sin2 = np.sum(sin2, 1)
-                cos2 = np.sum(cos2, 1)
-                sincos = np.sum(sincos, 1)
-                print('sin.shape', sin.shape)
-                print('Regular run')
+            # Sum together values for different t
+            sin = np.sum(y * sin, 1)
+            cos = np.sum(y * cos, 1)
+            sin2 = np.sum(sin2, 1)
+            cos2 = np.sum(cos2, 1)
+            sincos = np.sum(sincos, 1)
+            print('sin.shape', sin.shape)
+            print('Regular run')
 
-            except MemoryError:
-                sin = np.zeros(step_amnt)
-                cos = np.zeros(step_amnt)
-                sin2 = np.zeros(step_amnt)
-                cos2 = np.zeros(step_amnt)
-                sincos = np.zeros(step_amnt)
+        except MemoryError:
+            sin = np.zeros(step_amnt)
+            cos = np.zeros(step_amnt)
+            sin2 = np.zeros(step_amnt)
+            cos2 = np.zeros(step_amnt)
+            sincos = np.zeros(step_amnt)
 
-                chunk_size = 500
-                freq = np.ascontiguousarray(freq)
-                t = np.ascontiguousarray(t)
-                timing = []
-                for i in range(0, step_amnt, chunk_size):
-                    timestart = time.time()
-                    end = i + chunk_size
-                    product = np.dot(freq[i:end], t)
-                    sin_temp = y * np.sin(product)
-                    cos_temp = y * np.cos(product)
+            chunk_size = 500
+            freq = np.ascontiguousarray(freq)
+            t = np.ascontiguousarray(t)
+            for i in range(0, step_amnt, chunk_size):
+                end = i + chunk_size
+                if end >= step_amnt:
+                    end = step_amnt
 
-                    sin[i:end] = np.sum(sin_temp, 1)
-                    cos[i:end] = np.sum(cos_temp, 1)
-                    sin2[i:end] = np.sum(np.power(sin_temp, 2), 1)
-                    cos2[i:end] = np.sum(np.power(cos_temp, 2), 1)
-                    sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
-                    timeend = time.time()
-                    timing.append(timeend - timestart)
-                print('mean time', np.mean(timing))
-                print('std', np.std(timing))
-        sin = np.zeros(step_amnt)
-        cos = np.zeros(step_amnt)
-        sin2 = np.zeros(step_amnt)
-        cos2 = np.zeros(step_amnt)
-        sincos = np.zeros(step_amnt)
+                product = np.dot(freq[i:end], t)
+                # The time-heavy calculation
+                sin_temp = np.sin(product)
+                cos_temp = np.cos(product)
 
-        chunk_size = 1000
-        freq = np.ascontiguousarray(freq)
-        t = np.ascontiguousarray(t)
-        for i in range(0, step_amnt, chunk_size):
-            end = i + chunk_size
-            if end >= step_amnt:
-                end = step_amnt
-
-            product = np.dot(freq[i:end], t)
-            # The time-heavy calculation
-            sin_temp = np.sin(product)
-            cos_temp = np.cos(product)
-
-            sin[i:end] = np.sum(y*sin_temp, 1)
-            cos[i:end] = np.sum(y*cos_temp, 1)
-            sin2[i:end] = np.sum(sin_temp ** 2, 1)
-            cos2[i:end] = np.sum(cos_temp ** 2, 1)
-            sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
+                sin[i:end] = np.sum(y * sin_temp, 1)
+                cos[i:end] = np.sum(y * cos_temp, 1)
+                sin2[i:end] = np.sum(sin_temp ** 2, 1)
+                cos2[i:end] = np.sum(cos_temp ** 2, 1)
+                sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
 
         # # Calculate alpha and beta components of spectrum, and from them, power of spectrum
         alpha = (sin * cos2 - cos * sincos) / (sin2 * cos2 - np.power(sincos, 2))
