@@ -1,7 +1,5 @@
 from astropy.io import fits
-import matplotlib.pyplot as plt
 import numpy as np
-import os
 from ps_f import writer
 
 # # Indicate and show data structure

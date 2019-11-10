@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 print('What is the filename? (No file extension)')
 inpt1 = input()
 
-data = ps_f.reader(inpt1 + '.dat')
+data = ps_f.reader_legacy(inpt1 + '.dat')
 
 # # Preload variables to append data from file to
 tid = []

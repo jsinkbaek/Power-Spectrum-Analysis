@@ -2,29 +2,22 @@ import math
 import ps_f
 import matplotlib.pyplot as plt
 import nufftpy
-import numpy as np
 
 # # Input an call to load data set from file
 print('What is the filename? (No file extension)')
 inpt1 = input()
 
-data = ps_f.reader(inpt1 + '.dat')
+data = ps_f.reader(inpt1)
 
-# # Preload variables to append data from file to
-tid = []
-cflux = []
-mcflux = []
-variance = []
 
-# # Loop to append data to variables
-for row in data:
-    tid.append(row[0])
-    cflux.append(row[1])
-    mcflux.append(row[2])
-    variance.append(row[3])
+# # Pull variables from data
+time = data[0].ravel()  # ravel() is used to change shape from (n, 1) to (n, )
+flux = data[1].ravel()
+
 
 # # Frequency Conversion
 muHz = 0.000001  # Variable for converting to microHz
+
 
 # # Frequency calculation
 resolution = 0.01 * muHz  # 0.01 normal
@@ -33,9 +26,9 @@ steps = int((2 * halfwidth) / resolution)
 freq = nufftpy.nufftfreqs(steps, df=resolution)
 freq = freq[len(freq)//2:-1]
 
-# # Spectrum calculation from Non-uniform fft
 
-result = nufftpy.nufft1(tid, cflux, steps, df=(resolution * 2 * math.pi))
+# # Spectrum calculation from Non-uniform fft
+result = nufftpy.nufft1(time, flux, steps, df=(resolution * 2 * math.pi))
 result = result[len(result)//2:-1]
 
 spectral_power = result.real ** 2 + result.imag ** 2
