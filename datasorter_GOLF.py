@@ -19,6 +19,6 @@ flux_data = hdu_list[0].data
 time_jd = np.linspace(jdstart, jdend, (jdend-jdstart)/(cadence/86400))
 
 inpt = input('What name for the saved data? (exclude .dat)')
-k = 970/1000
+k = 900/1000
 
 writer(inpt, time_jd[int(k*len(time_jd)):len(time_jd)], flux_data[int(k*len(flux_data)):len(flux_data)])

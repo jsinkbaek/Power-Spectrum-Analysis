@@ -2,6 +2,7 @@ import math
 import ps_f
 import matplotlib.pyplot as plt
 import nufftpy
+import numpy as np
 
 # # Input an call to load data set from file
 print('What is the filename? (No file extension)')
@@ -20,7 +21,7 @@ muHz = 0.000001  # Variable for converting to microHz
 
 
 # # Frequency calculation
-resolution = 0.01 * muHz  # 0.01 normal
+resolution = 0.001 * muHz  # 0.01 normal
 halfwidth = 6000 * muHz
 steps = int((2 * halfwidth) / resolution)
 freq = nufftpy.nufftfreqs(steps, df=resolution)

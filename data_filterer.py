@@ -18,7 +18,7 @@ from scipy.ndimage import median_filter
 
 # Plot parameters (font size and option to skip plotting)
 plt.rcParams.update({'font.size': 22})  # Changes font size on all plots
-skip_plot = False
+skip_plot = True
 
 # # Data reading
 inpt1 = input('What is the filename (without extension)?')  # Input for data reader
@@ -38,7 +38,7 @@ time = time * 86400  # change to time in seconds
 mflux = median_filter(flux, 9, mode='reflect')
 
 # # Median plot
-if skip_plot is not True:
+if skip_plot is True:
     plt.figure()
     plt.plot(time_days, flux, 'b.')
     plt.plot(time_days, flux, 'b--', linewidth=0.5)
@@ -124,16 +124,14 @@ inpt2 = float(input('How many standard deviations away do we short out data?')) 
 
 # #  Deletion of points further than inpt2 std away in variance
 stdev = np.std(variance)  # Standard deviation of variance
-print(len(variance))
 
 del_select = np.where(np.abs(variance) > inpt2 * stdev)[0]
-print(len(del_select))
+
 variance = np.delete(variance, del_select)
 time = np.delete(time, del_select)
 time_days = np.delete(time_days, del_select)
 flux = np.delete(flux, del_select)
 mflux = np.delete(mflux, del_select)
-print(len(variance))
 
 
 if skip_plot is not True:
