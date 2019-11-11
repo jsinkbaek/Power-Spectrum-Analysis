@@ -478,16 +478,17 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         peaks_beta = harmonic_content.imag[peaks]
         peaks_freq = freq[peaks]
 
-        # plt.plot(freq, spectral_power)
-        # plt.plot(peaks_freq, peaks_power, 'r*', markersize=4)
-        # plt.show()
-
         # Find highest peak
         max_indx = np.argmax(peaks_power)
         max_freq = peaks_freq[max_indx]
         max_power = peaks_power[max_indx]
         max_alpha = peaks_alpha[max_indx]
         max_beta = peaks_beta[max_indx]
+
+        # plt.plot(freq, spectral_power)
+        # plt.plot(peaks_freq, peaks_power, 'r*', markersize=4)
+        # plt.plot(max_freq, max_power, 'b*', markersize=6
+        # plt.show()
 
         # Calculate harmonic signal corresponding to highest peak in power spectrum
         max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
