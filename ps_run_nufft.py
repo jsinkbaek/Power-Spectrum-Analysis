@@ -38,15 +38,26 @@ plt.plot(spectral_power)
 # plt.plot(res_pos.real, 'r--', linewidth=0.3)
 # plt.plot(res_pos.imag, 'b--', linewidth=0.3)
 plt.show()
-# ps_f.writer('spectrum', freq, spectral_power, res_pos.real, res_pos.imag)
+ps_f.writer('spectrum', freq, spectral_power, res_pos.real, res_pos.imag)
 
 
 # # Perform CLEAN procedure
-# Create CLEAN window (index found by examining spectrum plot)
-window = range(1665000, 5271000)
-# Call ps_f.clean_procedure
-# p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 250, halfwidth, resolution, window, mph=0.00002)
 
+# Create CLEAN window (index found by examining spectrum plot)
+# window = range(1665000, 5271000)  # Sun signal_golf res 0.001muHz
+window = range(195000, 500000)  # nuindi_filtered res 0.001muHz
+
+# Call ps_f.clean_procedure
+p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 50, halfwidth, resolution, window, mph=12)
+
+
+# # Autocorrelation within window
+acorr = as_f.autocorr(spectral_power[window])
+freq_ac = np.arange(0, resolution*len(acorr), resolution)
+print(type(acorr))
+plt.figure()
+plt.plot(freq_ac, acorr)
+plt.show(block=False)
 
 # # Peak autocorrelation
 try:
@@ -57,6 +68,10 @@ except NameError:
     p_freq = data[0].ravel()
     p_power = data[1].ravel()
 
-acorr, freq_ac = as_f.autocorr(p_power, number_of_steps=len(freq), x=p_freq, x_tot=freq)
-plt.plot(freq_ac, acorr)
-plt.show()
+acorr_p, freq_ac_p = as_f.autocorr(p_power, number_of_steps=len(freq), x=p_freq, x_tot=freq)
+plt.figure()
+plt.plot(freq_ac_p, acorr_p)
+plt.show(block=True)
+
+
+

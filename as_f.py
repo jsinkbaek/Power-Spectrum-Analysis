@@ -29,11 +29,11 @@ def autocorr(y, number_of_steps=None, x=None, x_tot=None):
     """
     # # Convert lists to numpy array
     y = np.asarray(y)
-    x = np.asarray(x)
-    x_tot = np.asarray(x_tot)
 
     # # Create autocorrelation from smaller data set, while maintaining same steps as defined by number_of_steps
     if number_of_steps is not None:
+        x = np.asarray(x)
+        x_tot = np.asarray(x_tot)
         if len(y) != number_of_steps and len(y) == len(x) and len(x_tot) == number_of_steps:
             data = np.zeros(number_of_steps)
             for i in range(0, len(x)):
@@ -56,7 +56,7 @@ def autocorr(y, number_of_steps=None, x=None, x_tot=None):
 
     # # Norm data by sum
     result = res/norm
-    if x_tot is not None:
+    if number_of_steps is not None:
         return result, x_tot
     else:
         return result

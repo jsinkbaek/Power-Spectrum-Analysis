@@ -142,8 +142,6 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
 
     # # Loop
     for i in range(0, n_iter):
-        t1 = tm.time()
-
         # Get cyclic frequencies for nufft1
         freq = nufftpy.nufftfreqs(steps, df=resolution)
         freq = freq[len(freq) // 2:-1]  # Take only positive frequencies
@@ -166,11 +164,14 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         peaks_freq = freq[peaks]
 
         # Find highest peak
-        max_indx = np.argmax(peaks_power)
-        max_freq = peaks_freq[max_indx]
-        max_power = peaks_power[max_indx]
-        max_alpha = peaks_alpha[max_indx]
-        max_beta = peaks_beta[max_indx]
+        try:
+            max_indx = np.argmax(peaks_power)
+            max_freq = peaks_freq[max_indx]
+            max_power = peaks_power[max_indx]
+            max_alpha = peaks_alpha[max_indx]
+            max_beta = peaks_beta[max_indx]
+        except ValueError:
+            break
 
         # plt.plot(freq, spectral_power)
         # plt.plot(peaks_freq, peaks_power, 'r*', markersize=4)
@@ -190,9 +191,6 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         p_alpha.append(max_alpha)
         p_beta.append(max_beta)
         p_freq.append(max_freq)
-
-        t2 = tm.time()
-        print(t2-t1)
 
     # # Result
     # Get cyclic frequencies for nufft1
