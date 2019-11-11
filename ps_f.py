@@ -6,7 +6,10 @@ Separated from run-script ps_run.py for convenience.
 import numpy as np
 import math
 import os
-import time
+import time as tm
+import nufftpy
+from detect_peaks import detect_peaks
+import matplotlib.pyplot as plt
 
 
 def reader_legacy(filename):
@@ -438,6 +441,64 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
         results[k] = [freq, power, alpha, beta]
 
     return results
+
+
+def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
+    peak_freq = []
+    peak_power = []
+    steps = int((2 * halfwidth) / resolution)
+    y_copy = np.copy(y)
+
+    for i in range(0, n_iter):
+        t1 = tm.time()
+        freq = nufftpy.nufftfreqs(steps, df=resolution)
+        freq = freq[len(freq) // 2:-1]
+        harmonic_content = nufftpy.nufft1(t, y_copy, steps, df=(resolution * 2 * np.pi))
+        harmonic_content = harmonic_content[len(harmonic_content)//2:-1]
+        if window is None:
+            window = range(0, len(harmonic_content))
+        harmonic_content = harmonic_content[window]
+        freq = freq[window]
+        spectral_power = harmonic_content.real ** 2 + harmonic_content.imag ** 2
+
+        peaks = detect_peaks(spectral_power, mph=mph)
+        peaks_power = spectral_power[peaks]
+        peaks_alpha = harmonic_content.real[peaks]
+        peaks_beta = harmonic_content.imag[peaks]
+        peaks_freq = freq[peaks]
+
+        # plt.plot(freq, spectral_power)
+        # plt.plot(peaks_freq, peaks_power, 'r*', markersize=4)
+        # plt.show()
+
+        max_indx = np.argmax(peaks_power)
+        max_freq = peaks_freq[max_indx]
+        max_power = peaks_power[max_indx]
+        max_alpha = peaks_alpha[max_indx]
+        max_beta = peaks_beta[max_indx]
+
+        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
+
+        # plt.plot(t, y_copy, linewidth=0.5)
+        # plt.plot(t, max_signal, '--', linewidth=0.3)
+        # plt.show()
+
+        y_copy -= max_signal
+        peak_power.append(max_power)
+        peak_freq.append(max_freq)
+        t2 = tm.time()
+        print(t2-t1)
+
+    freq = nufftpy.nufftfreqs(steps, df=resolution)
+    freq = freq[len(freq) // 2:-1]
+    harmonic_content = nufftpy.nufft1(t, y, steps, df=(resolution * 2 * np.pi))
+    harmonic_content = harmonic_content[len(harmonic_content) // 2:-1]
+    spectral_power = harmonic_content.real ** 2 + harmonic_content.imag ** 2
+    plt.plot(freq, spectral_power)
+    plt.plot(peak_freq, peak_power, 'r*', markersize=4)
+    plt.show()
+
+    writer('clean_peaks', peak_freq, peak_power)
 
 
 def pwriter(filename, freq, p, alpha, beta):
