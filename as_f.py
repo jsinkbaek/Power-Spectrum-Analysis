@@ -45,17 +45,11 @@ def autocorr(y, number_of_steps=None, x=None, x_tot=None):
     else:
         data = y
 
-    t1 = tm.time()
     # # Calculate sum squared, to norm autocorrelation
     norm = np.sum(data**2)
-    t2 = tm.time()
-    print('Time', t2 - t1)
 
     # # Calculate correlation from negative to positive frequency change
-    t3 = tm.time()
     res = signal.correlate(data, data, mode='full', method='fft')
-    t4 = tm.time()
-    print('Time', t4-t3)
 
     # # Save only the positive part (last half)
     res = res[res.size//2:]
