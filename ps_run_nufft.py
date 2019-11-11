@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import nufftpy
 import numpy as np
 import time as tm
+import as_f
 
 # # Input an call to load data set from file
 print('What is the filename? (No file extension)')
@@ -33,20 +34,29 @@ result = nufftpy.nufft1(time, flux, steps, df=(resolution * 2 * math.pi))
 res_pos = result[len(result)//2:-1]
 
 spectral_power = res_pos.real ** 2 + res_pos.imag ** 2
-
 plt.plot(spectral_power)
 # plt.plot(res_pos.real, 'r--', linewidth=0.3)
 # plt.plot(res_pos.imag, 'b--', linewidth=0.3)
 plt.show()
-ps_f.writer('spectrum', freq, spectral_power, res_pos.real, res_pos.imag)
+# ps_f.writer('spectrum', freq, spectral_power, res_pos.real, res_pos.imag)
 
 
 # # Perform CLEAN procedure
 # Create CLEAN window (index found by examining spectrum plot)
 window = range(1665000, 5271000)
 # Call ps_f.clean_procedure
-p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 250, halfwidth, resolution, window, mph=0.00002)
+# p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 250, halfwidth, resolution, window, mph=0.00002)
 
 
 # # Peak autocorrelation
-freq_ac = np.copy
+try:
+    print(len(p_freq))
+    print(len(p_power))
+except NameError:
+    data = ps_f.reader('clean_peaks')
+    p_freq = data[0].ravel()
+    p_power = data[1].ravel()
+
+acorr, freq_ac = as_f.autocorr(p_power, number_of_steps=len(freq), x=p_freq, x_tot=freq)
+plt.plot(freq_ac, acorr)
+plt.show()
