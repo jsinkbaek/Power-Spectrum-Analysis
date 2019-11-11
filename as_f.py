@@ -10,7 +10,7 @@ from scipy import signal
 from pandas import Series
 
 
-def autocorr(x):
+def autocorr(y, number_of_steps=None, x=None, x_tot=None):
     """
     http://en.wikipedia.org/wiki/Autocorrelation#Estimation
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html
@@ -21,14 +21,28 @@ def autocorr(x):
     difference in frequency between each element of x.
 
     Returns:
-        result: a list of normed autocorrelation values, one for each displacement frequency
+        result: a list of normalized autocorrelation values, one for each displacement frequency
 
     Variables:
-        x: List of float, signal data usually, in this context it would be the power spectrum values
+        y: List of float, signal data usually, in this context it would be the power spectrum values
     """
+    # # Convert lists to numpy array
+    y = np.asarray(y)
+    x = np.asarray(x)
+    x_tot = np.asarray(x_tot)
 
-    # # Convert list to numpy array
-    data = np.asarray(x)
+    # # Create autocorrelation from smaller data set, while maintaining same steps as defined by number_of_steps
+    if number_of_steps is not None:
+        if len(y) != number_of_steps and len(y) == len(x) and len(x_tot) == number_of_steps:
+            data = np.zeros(number_of_steps)
+            for i in range(0, len(x)):
+                indx = np.argmin(np.abs(x_tot - x[i]))
+                data[indx], x_tot[indx] = y[i], x[i]
+        else:
+            data = y
+            print('Warning, number_of_steps specified, but problems with y, x, or x_tot.')
+    else:
+        data = y
 
     # # Calculate sum squared, to norm autocorrelation
     norm = np.sum(data**2)
@@ -39,9 +53,12 @@ def autocorr(x):
     # # Save only the positive part (last half)
     res = res[res.size//2:]
 
-    # # Norm data by variance
+    # # Norm data by sum
     result = res/norm
-    return result
+    if x_tot is not None:
+        return result, x_tot
+    else:
+        return result
 
 
 def echelle(x, modulus, **kwargs):

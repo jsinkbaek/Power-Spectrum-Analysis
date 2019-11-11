@@ -2,6 +2,7 @@ import math
 import ps_f
 import matplotlib.pyplot as plt
 import nufftpy
+import numpy as np
 import time as tm
 
 # # Input an call to load data set from file
@@ -47,3 +48,5 @@ window = range(1665000, 5271000)
 p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 250, halfwidth, resolution, window, mph=0.00002)
 
 
+# # Peak autocorrelation
+freq_ac = np.copy
