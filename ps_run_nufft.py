@@ -27,7 +27,7 @@ steps = int((2 * halfwidth) / resolution)
 freq = nufftpy.nufftfreqs(steps, df=resolution)
 freq = freq[len(freq)//2:-1]
 
-# # Spectrum calculation from Non-uniform fft
+# # Spectrum calculation from non-uniform fft
 result = nufftpy.nufft1(time, flux, steps, df=(resolution * 2 * math.pi))
 res_pos = result[len(result)//2:-1]
 
@@ -39,7 +39,11 @@ plt.plot(spectral_power)
 plt.show()
 ps_f.writer('spectrum', freq, spectral_power, res_pos.real, res_pos.imag)
 
-window = range(1665000, 5271000)
 
 # # Perform CLEAN procedure
-ps_f.clean_procedure(time, flux, 400, halfwidth, resolution, window, mph=0.00002)
+# Create CLEAN window (index found by examining spectrum plot)
+window = range(1665000, 5271000)
+# Call ps_f.clean_procedure
+p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 250, halfwidth, resolution, window, mph=0.00002)
+
+

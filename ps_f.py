@@ -133,6 +133,8 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
     # Preload lists for storing found peaks
     p_freq = []
     p_power = []
+    p_alpha = []
+    p_beta = []
     # Get amount of frequency steps for nufft1
     steps = int((2 * halfwidth) / resolution)
     # Make carbon copy of signal for manipulation
@@ -185,6 +187,8 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         # Subtract calculated signal from y_copy and save the peak used
         y_copy -= max_signal
         p_power.append(max_power)
+        p_alpha.append(max_alpha)
+        p_beta.append(max_beta)
         p_freq.append(max_freq)
 
         t2 = tm.time()
@@ -207,3 +211,5 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
 
     # Save peaks found by cleaning in .dat file
     writer('clean_peaks', p_freq, p_power)
+
+    return p_freq, p_power, p_alpha, p_beta
