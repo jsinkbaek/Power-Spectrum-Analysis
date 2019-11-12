@@ -20,7 +20,7 @@ import os
 
 def correcter(filename):
     f = open(os.path.join('Datafiles', filename), 'r')  # Open in readmode
-    open(os.path.join('Datafiles', 'corrected' + filename), 'w').close()  # Clears the write file
+    open(os.path.join('Datafiles', 'converted_' + filename), 'w').close()  # Clears the write file
     b = 0
     print('Input column number for pixel quality flag (as indicated by datafile).')
     inpt1 = input()

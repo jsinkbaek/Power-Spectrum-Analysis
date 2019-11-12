@@ -142,6 +142,8 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
 
     # # Loop
     for i in range(0, n_iter):
+        t1 = tm.time()
+
         # Get cyclic frequencies for nufft1
         freq = nufftpy.nufftfreqs(steps, df=resolution)
         freq = freq[len(freq) // 2:-1]  # Take only positive frequencies
@@ -191,6 +193,9 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         p_alpha.append(max_alpha)
         p_beta.append(max_beta)
         p_freq.append(max_freq)
+
+        t2 = tm.time()
+        print(t2-t1)
 
     # # Result
     # Get cyclic frequencies for nufft1

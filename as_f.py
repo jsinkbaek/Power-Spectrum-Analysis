@@ -168,7 +168,7 @@ def echelle(x, modulus, **kwargs):
         nbins = kwargs.get('number_of_bins', 64)
 
         # Construct 2D histogram from data using the 'plasma' colormap
-        ax.hist2d(xmod, x, bins=nbins, weights=weights, normed=False, cmap='plasma')
+        ax.hist2d(xmod, x, bins=nbins, weights=weights, normed=False, cmap='viridis')
 
         # Make title
         ax.set_title('Heatmap Echelle diagram')

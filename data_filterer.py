@@ -18,7 +18,7 @@ from scipy.ndimage import median_filter
 
 # Plot parameters (font size and option to skip plotting)
 plt.rcParams.update({'font.size': 22})  # Changes font size on all plots
-skip_plot = True
+skip_plot = False
 
 # # Data reading
 inpt1 = input('What is the filename (without extension)?')  # Input for data reader
@@ -26,6 +26,7 @@ data = ps_f.reader(inpt1)
 
 time = data[0]
 flux = data[1]
+flux = flux - np.mean(flux)
 
 start = time[0]
 daytype = 'JD'
@@ -38,7 +39,7 @@ time = time * 86400  # change to time in seconds
 mflux = median_filter(flux, 9, mode='reflect')
 
 # # Median plot
-if skip_plot is True:
+if skip_plot is not True:
     plt.figure()
     plt.plot(time_days, flux, 'b.')
     plt.plot(time_days, flux, 'b--', linewidth=0.5)
