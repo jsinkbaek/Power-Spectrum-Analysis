@@ -49,7 +49,7 @@ plt.show()
 
 # Create CLEAN window (index found by examining spectrum plot)
 window_set = [range(1665000, 5271000), range(8400, 990000), range(195000, 500000)]  # sun, star2, nuindi
-#window = range(1665000, 5271000)  # Sun signal_golf res 0.001muHz
+# window = range(1665000, 5271000)  # Sun signal_golf res 0.001muHz
 window = window_set[dataset]
 
 # Call ps_f.clean_procedure
