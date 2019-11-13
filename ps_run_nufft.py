@@ -17,7 +17,7 @@ time = data[0].ravel()  # ravel() is used to change shape from (n, 1) to (n, )
 flux = data[1].ravel()
 
 # # Used to indicate which window, modulus and scaling should be used
-dataset = 1  # 1 = sun, 2 = star2, 3 = nuindi
+dataset = 1  # 0 = sun, 1 = star2, 2 = nuindi
 
 # # Frequency Conversion
 muHz = 0.000001  # Variable for converting to microHz
