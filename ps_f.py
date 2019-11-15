@@ -99,8 +99,8 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             # t = np.ascontiguousarray(t)
 
             # Recurrence sine and cosine difference product
-            s_diff = np.sin(2 * pi * resolution * t)
-            c_diff = np.cos(2 * pi * resolution * t)
+            s_diff = np.sin(resolution * t)
+            c_diff = np.cos(resolution * t)
 
             # # Calculation matrices
             # use [c0, -s0][c_diff, -s_diff; s_diff, -c_diff] for cosine calculation (inverted in calc for .T)
