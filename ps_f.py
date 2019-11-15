@@ -23,7 +23,7 @@ def reader(fname):
     return np.array_split(arr, len(arr[0, :]), axis=1)
 
 
-def create_pspectrum(y, t, freq_centre, half_width, resolution):
+def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100):
     pi = math.pi
     # # Prepare input for use
 
@@ -68,103 +68,79 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
         # Calculate sine and cosine function part values
         print(freq.shape)
         print(t.shape)
-        try:
-            product = np.matmul(freq, t)
-            sin = np.sin(product)
-            cos = np.cos(product)
-            sin2 = sin ** 2
-            cos2 = cos ** 2
-            sincos = sin * cos
-            print('sin.shape', sin.shape)
 
-            # Sum together values for different t
-            sin = np.sum(y * sin, 1)
-            cos = np.sum(y * cos, 1)
-            sin2 = np.sum(sin2, 1)
-            cos2 = np.sum(cos2, 1)
-            sincos = np.sum(sincos, 1)
-            print('sin.shape', sin.shape)
-            print('Regular run')
+        sin = np.zeros(step_amnt)
+        cos = np.zeros(step_amnt)
+        sin2 = np.zeros(step_amnt)
+        cos2 = np.zeros(step_amnt)
+        sincos = np.zeros(step_amnt)
 
-        except MemoryError:
-            sin = np.zeros(step_amnt)
-            cos = np.zeros(step_amnt)
-            sin2 = np.zeros(step_amnt)
-            cos2 = np.zeros(step_amnt)
-            sincos = np.zeros(step_amnt)
+        freq = np.ascontiguousarray(freq)
+        t = np.reshape(t, (lent,))
+        # t = np.ascontiguousarray(t)
 
-            chunk_size = 500
-            freq = np.ascontiguousarray(freq)
-            t = np.reshape(t, (lent, ))
-            # t = np.ascontiguousarray(t)
+        # Recurrence sine and cosine difference product
+        s_diff = np.sin(resolution * t)
+        c_diff = np.cos(resolution * t)
 
-            # Recurrence sine and cosine difference product
-            s_diff = np.sin(resolution * t)
-            c_diff = np.cos(resolution * t)
+        # # Calculation matrices
+        # use [c0, -s0][c_diff, -s_diff; s_diff, -c_diff] for cosine calculation (inverted in calc for .T)
+        # use [s0, c0][c_diff, -s_diff; s_diff, c_diff] for sine calculation
+        # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and
+        # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981
+        cos_base = np.array([[c_diff, s_diff], [-s_diff, -c_diff]]).T
+        sin_base = np.array([[c_diff, s_diff], [-s_diff, c_diff]]).T
+        print('sin_base.shape', sin_base.shape)
+        cos_mat = np.zeros((chunk_size, lent, 2, 2))
+        sin_mat = np.zeros((chunk_size, lent, 2, 2))
+        cos_mat[0, :, :, :] = cos_base
+        sin_mat[0, :, :, :] = sin_base
 
-            # # Calculation matrices
-            # use [c0, -s0][c_diff, -s_diff; s_diff, -c_diff] for cosine calculation (inverted in calc for .T)
-            # use [s0, c0][c_diff, -s_diff; s_diff, c_diff] for sine calculation
-            # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and
-            # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981
-            cos_base = np.array([[c_diff, s_diff], [-s_diff, -c_diff]]).T
-            sin_base = np.array([[c_diff, s_diff], [-s_diff, c_diff]]).T
-            print('sin_base.shape', sin_base.shape)
-            cos_mat = np.zeros((chunk_size, lent, 2, 2))
-            sin_mat = np.zeros((chunk_size, lent, 2, 2))
-            cos_mat[0, :, :, :] = cos_base
-            sin_mat[0, :, :, :] = sin_base
+        # Generates the necessary matrices (multiplied) for each frequency point based on the original point
+        for i in range(1, chunk_size):
+            cos_mat[i, :, :, :] = np.matmul(cos_mat[i - 1, :, :, :], cos_base)
+            sin_mat[i, :, :, :] = np.matmul(sin_mat[i - 1, :, :, :], sin_base)
 
-            # Generates the necessary matrices (multiplied) for each frequency point based on the original point
-            t0 = tm.time()
-            for i in range(1, chunk_size):
-                t1 = tm.time()
-                cos_mat[i, :, :, :] = np.matmul(cos_mat[i-1, :, :, :], cos_base)
-                sin_mat[i, :, :, :] = np.matmul(sin_mat[i-1, :, :, :], sin_base)
-                t2 = tm.time()
-                print(t2-t1)
-            t3 = tm.time()
-            print('matcalc time', t3-t0)
+        # Convert large matrix arrays to contigousarrays
+        cos_mat = np.ascontiguousarray(cos_mat)
+        sin_mat = np.ascontiguousarray(sin_mat)
 
-            # Convert large matrix arrays to contigousarrays
-            cos_mat = np.ascontiguousarray(cos_mat)
-            sin_mat = np.ascontiguousarray(sin_mat)
+        # Calculates sine and cosine values
+        for i in range(0, step_amnt, chunk_size):
+            print('Current i ', i, ' of ', step_amnt)
+            t4 = tm.time()
+            end = i + chunk_size
+            if end >= step_amnt:
+                end = step_amnt
 
-            # Calculates sine and cosine values
-            for i in range(0, step_amnt, chunk_size):
-                t4 = tm.time()
-                end = i + chunk_size
-                if end >= step_amnt:
-                    end = step_amnt
+            # Original point calculation
+            s0 = np.sin(freq[i] * t)
+            c0 = np.cos(freq[i] * t)
 
-                # Original point calculation
-                s0 = np.sin(freq[i]*t)
-                c0 = np.cos(freq[i]*t)
+            # Sine/cosine vector initialization (for matmul calculation, see c0, s0 before loop)
+            sin_vec = np.zeros((lent, 1, 2))
+            sin_vec[:, 0, 0] = s0
+            sin_vec[:, 0, 1] = c0
+            sin_vec = np.repeat(sin_vec[np.newaxis, :, :, :], chunk_size, axis=0)
+            cos_vec = np.zeros((lent, 1, 2))
+            cos_vec[:, 0, 0] = c0
+            cos_vec[:, 0, 1] = -s0
+            cos_vec = np.repeat(cos_vec[np.newaxis, :, :, :], chunk_size, axis=0)
 
-                # Sine/cosine vector initialization (for matmul calculation, see c0, s0 before loop)
-                sin_vec = np.zeros((lent, 1, 2))
-                sin_vec[:, 1, 0] = s0
-                sin_vec[:, 1, 1] = c0
-                sin_vec = np.repeat(sin_vec[np.newaxis, :, :, :], chunk_size, axis=0)
-                cos_vec = np.zeros((lent, 1, 2))
-                cos_vec[:, 1, 0] = c0
-                cos_vec[:, 1, 1] = -s0
-                cos_vec = np.repeat(cos_vec[np.newaxis, :, :, :], chunk_size, axis=0)
+            sin_temp = np.matmul(sin_vec, sin_mat)[:, :, 0, 0]
+            cos_temp = np.matmul(cos_vec, cos_mat)[:, :, 0, 0]
 
-                sin_temp = np.matmul(sin_vec, sin_mat)[:, :, 0, 0]
-                cos_temp = np.matmul(cos_vec, cos_mat)[:, :, 0, 0]
+            # # The time-heavy calculation
+            # sin_temp = np.sin(product)
+            # cos_temp = np.cos(product)
 
-                # # The time-heavy calculation
-                # sin_temp = np.sin(product)
-                # cos_temp = np.cos(product)
-
-                sin[i:end] = np.sum(y * sin_temp, 1)
-                cos[i:end] = np.sum(y * cos_temp, 1)
-                sin2[i:end] = np.sum(sin_temp ** 2, 1)
-                cos2[i:end] = np.sum(cos_temp ** 2, 1)
-                sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
-                t5 = tm.time()
-                print('sine cosine values loop iter time', t5-t4)
+            sin[i:end] = np.sum(y * sin_temp, 1)
+            cos[i:end] = np.sum(y * cos_temp, 1)
+            sin2[i:end] = np.sum(sin_temp ** 2, 1)
+            cos2[i:end] = np.sum(cos_temp ** 2, 1)
+            sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
+            t5 = tm.time()
+            print('sine cosine values loop iter time', t5 - t4)
 
         # # Calculate alpha and beta components of spectrum, and from them, power of spectrum
         alpha = (sin * cos2 - cos * sincos) / (sin2 * cos2 - np.power(sincos, 2))
