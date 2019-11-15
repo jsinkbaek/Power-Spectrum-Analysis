@@ -95,15 +95,36 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             chunk_size = 1000
             freq = np.ascontiguousarray(freq)
             t = np.ascontiguousarray(t)
+
+            # Recurrence sine and cosine difference product
+            s_diff = np.sin(2 * pi * resolution * t)
+            c_diff = np.cos(2 * pi * resolution * t)
+
+            # Calculation matrices
+            cos_base = np.array([[c_diff, -c_diff], [s_diff, s_diff]])
+            cos_mat = np.zeros((2, 2, chunk_size))
+            cos_mat[:, :, 0] = cos_base
+            # Generates the necessary matrix multiplications for each frequency point based on the original point
+            for i in range(1, chunk_size):
+                cos_mat[:, :, i] = np.matmul(cos_mat[:, :, i-1], cos_mat)
+
+            # Calculates sine and cosine values
             for i in range(0, step_amnt, chunk_size):
                 end = i + chunk_size
                 if end >= step_amnt:
                     end = step_amnt
 
                 product = np.dot(freq[i:end], t)
-                # The time-heavy calculation
-                sin_temp = np.sin(product)
-                cos_temp = np.cos(product)
+
+                # Original point calculation
+                s0 = np.sin(freq[i]*t)
+                c0 = np.cos(freq[i]*t)
+
+                sin_temp =
+
+                # # The time-heavy calculation
+                # sin_temp = np.sin(product)
+                # cos_temp = np.cos(product)
 
                 sin[i:end] = np.sum(y * sin_temp, 1)
                 cos[i:end] = np.sum(y * cos_temp, 1)
