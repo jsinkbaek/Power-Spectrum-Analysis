@@ -60,7 +60,8 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
 
         # Reshape freq and t in order to do matrix multiplication
         freq = np.reshape(freq, (len(freq), 1))
-        t = np.reshape(t, (1, len(t)))
+        lent = len(t)
+        t = np.reshape(t, (1, lent))
 
         # # Zhu Li, do the thing
 
@@ -94,33 +95,58 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
 
             chunk_size = 1000
             freq = np.ascontiguousarray(freq)
-            t = np.ascontiguousarray(t)
+            t = np.reshape(t, (lent, ))
+            # t = np.ascontiguousarray(t)
 
             # Recurrence sine and cosine difference product
             s_diff = np.sin(2 * pi * resolution * t)
             c_diff = np.cos(2 * pi * resolution * t)
 
-            # Calculation matrices
-            cos_base = np.array([[c_diff, -c_diff], [s_diff, s_diff]])
-            cos_mat = np.zeros((2, 2, chunk_size))
-            cos_mat[:, :, 0] = cos_base
-            # Generates the necessary matrix multiplications for each frequency point based on the original point
+            # # Calculation matrices
+            # use [c0, -s0][c_diff, -s_diff; s_diff, -c_diff] for cosine calculation (inverted in calc for .T)
+            # use [s0, c0][c_diff, -s_diff; s_diff, c_diff] for sine calculation
+            cos_base = np.array([[c_diff, s_diff], [-s_diff, -c_diff]]).T
+            sin_base = np.array([[c_diff, s_diff], [-s_diff, c_diff]]).T
+            print('sin_base.shape', sin_base.shape)
+            cos_mat = np.zeros((chunk_size, lent, 2, 2))
+            sin_mat = np.zeros((chunk_size, lent, 2, 2))
+            cos_mat[0, :, :, :] = cos_base
+            sin_mat[0, :, :, :] = sin_base
+
+            # Generates the necessary matrices (multiplied) for each frequency point based on the original point
+            t0 = tm.time()
             for i in range(1, chunk_size):
-                cos_mat[:, :, i] = np.matmul(cos_mat[:, :, i-1], cos_mat)
+                t1 = tm.time()
+                cos_mat[i, :, :, :] = np.matmul(cos_mat[i-1, :, :, :], cos_base)
+                sin_mat[i, :, :, :] = np.matmul(sin_mat[i-1, :, :, :], sin_base)
+                t2 = tm.time()
+                print(t2-t1)
+            t3 = tm.time()
+            print('matcalc time', t3-t0)
 
             # Calculates sine and cosine values
             for i in range(0, step_amnt, chunk_size):
+                t4 = tm.time()
                 end = i + chunk_size
                 if end >= step_amnt:
                     end = step_amnt
-
-                product = np.dot(freq[i:end], t)
 
                 # Original point calculation
                 s0 = np.sin(freq[i]*t)
                 c0 = np.cos(freq[i]*t)
 
-                sin_temp =
+                # Sine/cosine vector initialization (for matmul calculation)
+                sin_vec = np.zeros((lent, 1, 2))
+                sin_vec[:, 1, 0] = s0
+                sin_vec[:, 1, 1] = c0
+                sin_vec = np.repeat(sin_vec[np.newaxis, :, :, :], chunk_size, axis=0)
+                cos_vec = np.zeros((lent, 1, 2))
+                cos_vec[:, 1, 0] = c0
+                cos_vec[:, 1, 1] = -s0
+                cos_vec = np.repeat(cos_vec[np.newaxis, :, :, :], chunk_size, axis=0)
+
+                sin_temp = np.matmul(sin_vec, sin_mat)[:, :, 0, 0]
+                cos_temp = np.matmul(cos_vec, cos_mat)[:, :, 0, 0]
 
                 # # The time-heavy calculation
                 # sin_temp = np.sin(product)
@@ -131,6 +157,8 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
                 sin2[i:end] = np.sum(sin_temp ** 2, 1)
                 cos2[i:end] = np.sum(cos_temp ** 2, 1)
                 sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
+                t5 = tm.time()
+                print('sine cosine values loop iter time', t5-t4)
 
         # # Calculate alpha and beta components of spectrum, and from them, power of spectrum
         alpha = (sin * cos2 - cos * sincos) / (sin2 * cos2 - np.power(sincos, 2))
