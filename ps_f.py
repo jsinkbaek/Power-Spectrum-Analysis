@@ -93,7 +93,7 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             cos2 = np.zeros(step_amnt)
             sincos = np.zeros(step_amnt)
 
-            chunk_size = 1000
+            chunk_size = 500
             freq = np.ascontiguousarray(freq)
             t = np.reshape(t, (lent, ))
             # t = np.ascontiguousarray(t)
@@ -124,6 +124,10 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             t3 = tm.time()
             print('matcalc time', t3-t0)
 
+            # Convert large matrix arrays to contigousarrays
+            cos_mat = np.ascontiguousarray(cos_mat)
+            sin_mat = np.ascontiguousarray(sin_mat)
+
             # Calculates sine and cosine values
             for i in range(0, step_amnt, chunk_size):
                 t4 = tm.time()
@@ -135,7 +139,7 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
                 s0 = np.sin(freq[i]*t)
                 c0 = np.cos(freq[i]*t)
 
-                # Sine/cosine vector initialization (for matmul calculation)
+                # Sine/cosine vector initialization (for matmul calculation, see c0, s0 before loop)
                 sin_vec = np.zeros((lent, 1, 2))
                 sin_vec[:, 1, 0] = s0
                 sin_vec[:, 1, 1] = c0
