@@ -105,6 +105,8 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution):
             # # Calculation matrices
             # use [c0, -s0][c_diff, -s_diff; s_diff, -c_diff] for cosine calculation (inverted in calc for .T)
             # use [s0, c0][c_diff, -s_diff; s_diff, c_diff] for sine calculation
+            # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and
+            # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981
             cos_base = np.array([[c_diff, s_diff], [-s_diff, -c_diff]]).T
             sin_base = np.array([[c_diff, s_diff], [-s_diff, c_diff]]).T
             print('sin_base.shape', sin_base.shape)
