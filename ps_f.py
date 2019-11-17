@@ -7,7 +7,7 @@ import numpy as np
 import math
 import os
 import time as tm
-import nufftpy
+# import nufftpy
 from detect_peaks import detect_peaks
 import matplotlib.pyplot as plt
 
@@ -100,12 +100,12 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
 
         # Calculates sine and cosine values
         for i in range(0, step_amnt, chunk_size):
-
-            t4 = tm.time()
+            t3 = tm.time()
             end = i + chunk_size
-            if end >= step_amnt:
+            if end > step_amnt:
                 end = step_amnt
                 chunk_size = end - i
+
             print('Current i ', i, ':', end, ' of ', step_amnt)
 
             # Original point calculation
@@ -113,26 +113,36 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
             c0 = np.cos(freq[i] * t, dtype=dtype)
 
             # Sine/cosine vector initialization (for matmul calculation, see c0, s0 before loop)
-            trig_vec = np.zeros((lent, 1, 2))
-            trig_vec[:, 0, 0] = c0
-            trig_vec[:, 0, 1] = s0
-            trig_vec = np.repeat(trig_vec[np.newaxis, :, :, :], chunk_size, axis=0)
+            trig_vec = np.zeros((1, lent, 1, 2))
+            trig_vec[0, :, 0, 0] = c0
+            trig_vec[0, :, 0, 1] = s0
+            trig_vec = np.repeat(trig_vec, chunk_size, axis=0)
 
+            # Matrix calculations
+            t9 = tm.time()
             matrix_result = np.matmul(trig_vec, calc_mat)
+            t10 = tm.time()
             sin_temp = matrix_result[:, :, 0, 1]
             cos_temp = matrix_result[:, :, 0, 0]
+            t11 = tm.time()
+            print('matrix calculations')
+            print('matmul', t10-t9)
+            print('assign sin_temp cos_temp', t11-t10)
+            print(' ')
 
-            # # The time-heavy calculation
-            # sin_temp = np.sin(product)
-            # cos_temp = np.cos(product)
-
+            # Sum and save results
+            t12 = tm.time()
             sin[i:end] = np.sum(y * sin_temp, 1)
             cos[i:end] = np.sum(y * cos_temp, 1)
             sin2[i:end] = np.sum(sin_temp ** 2, 1)
             cos2[i:end] = np.sum(cos_temp ** 2, 1)
             sincos[i:end] = np.sum(sin_temp * cos_temp, 1)
-            t5 = tm.time()
-            print('sine cosine values loop iter time', t5 - t4)
+            t4 = tm.time()
+            print('Sum and save', t4-t12)
+            print('sine cosine values loop iter time', t4 - t3)
+            print(' ')
+            print(' ')
+            print(' ')
 
         # # Calculate alpha and beta components of spectrum, and from them, power of spectrum
         alpha = (sin * cos2 - cos * sincos) / (sin2 * cos2 - sincos**2)
