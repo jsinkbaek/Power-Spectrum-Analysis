@@ -85,10 +85,11 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
         s_diff = np.sin(resolution * t, dtype=dtype)
         c_diff = np.cos(resolution * t, dtype=dtype)
 
-        # # Calculation matrices
+        # # # # # Calculation matrices # # # # #
         # use [c0, s0][c_diff, s_diff; -s_diff, c_diff]  (inverted in calc for .T)
         # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and
         # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981
+        # # # # # # # # # #  # # # # # # # # # #
 
         calc_base = np.array([[c_diff, -s_diff], [s_diff, c_diff]]).T
         print('calc_base.shape', calc_base.shape)
@@ -106,6 +107,9 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
         for i in range(0, step_amnt, chunk_size):
             end = i + chunk_size
             if end > step_amnt:
+                dif = end - step_amnt
+                print('calcmattest', calc_mat[chunk_size-dif:chunk_size, 0, :, :])
+                calc_mat = np.delete(calc_mat, range(chunk_size-dif, chunk_size), 0)
                 end = step_amnt
                 chunk_size = end - i
 
@@ -120,6 +124,8 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
             trig_vec[0, :, 0, 0] = c0
             trig_vec[0, :, 0, 1] = s0
             trig_vec = np.repeat(trig_vec, chunk_size, axis=0)
+            print(trig_vec.shape)
+            print(calc_mat.shape)
 
             # Matrix calculations)
             matrix_result = np.matmul(trig_vec, calc_mat)

@@ -68,7 +68,7 @@ if skip_plot is not True:
     plt.figure()
     plt.plot(sorted(variance), 'r.')
     plt.ylabel('sorted variance')
-    plt.show(block=False)
+    plt.show(block=True)
 
 
 # # Deletion of data points by manual selection of interval
@@ -155,7 +155,7 @@ if skip_plot is not True:
     plt.plot(time_days, mflux, 'g.')
     plt.xlabel('Days after ' + str(start) + daytype)
     plt.ylabel('Corrected flux (ppm)')
-    plt.show(block=False)
+    plt.show(block=True)
 
 # # Writer call to save data
 inpt3 = input('What is the filename (without extension)?')
