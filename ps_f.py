@@ -109,7 +109,7 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
                 end = step_amnt
                 chunk_size = end - i
 
-            print('Current i ', i, ':', end, ' of ', step_amnt)
+            print('Current chunk ', i, ':', end, ' of ', step_amnt)
 
             # Original point calculation
             s0 = np.sin(freq[i] * t, dtype=dtype)

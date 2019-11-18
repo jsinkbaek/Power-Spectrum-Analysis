@@ -17,11 +17,11 @@ muHz = 0.000001  # Variable for converting to microHz
 
 # # Frequency calculation
 resolution = 0.01 * muHz  # 0.01 normal
-halfwidth = 6000*muHz
+halfwidth = 3000*muHz
 steps = int((2 * halfwidth) / resolution)
 
 # # Spectrum calculation from sine cosine least squares fitting
-results = ps_f.create_pspectrum(flux, time, [6005*muHz], halfwidth, resolution, chunk_size=250, dtype=np.longdouble)[0]
+results = ps_f.create_pspectrum(flux, time, [3005*muHz], halfwidth, resolution, chunk_size=250, dtype=np.longdouble)[0]
 freq, spectral_power = results[0], results[1]
 
 plt.plot(freq, spectral_power)
