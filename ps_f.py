@@ -10,7 +10,6 @@ import time as tm
 import nufftpy
 from detect_peaks import detect_peaks
 import matplotlib.pyplot as plt
-import scipy.linalg as la
 
 
 def writer(fname, *args):
@@ -108,7 +107,6 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
             end = i + chunk_size
             if end > step_amnt:
                 dif = end - step_amnt
-                print('calcmattest', calc_mat[chunk_size-dif:chunk_size, 0, :, :])
                 calc_mat = np.delete(calc_mat, range(chunk_size-dif, chunk_size), 0)
                 end = step_amnt
                 chunk_size = end - i
@@ -124,8 +122,6 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
             trig_vec[0, :, 0, 0] = c0
             trig_vec[0, :, 0, 1] = s0
             trig_vec = np.repeat(trig_vec, chunk_size, axis=0)
-            print(trig_vec.shape)
-            print(calc_mat.shape)
 
             # Matrix calculations)
             matrix_result = np.matmul(trig_vec, calc_mat)
@@ -204,11 +200,11 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
             max_beta = peaks_beta[max_indx]
         except ValueError:
             break
-
+        # plt.figure()
         # plt.plot(freq, spectral_power)
         # plt.plot(peaks_freq, peaks_power, 'r*', markersize=4)
-        # plt.plot(max_freq, max_power, 'b*', markersize=6
-        # plt.show()
+        # plt.plot(max_freq, max_power, 'b*', markersize=6)
+        # plt.show(block=False)
 
         # Calculate harmonic signal corresponding to highest peak in power spectrum
         max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
@@ -238,6 +234,7 @@ def clean_procedure(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
     spectral_power = harmonic_content.real ** 2 + harmonic_content.imag ** 2
 
     # Plot power spectrum and peaks found by cleaning
+    plt.figure()
     plt.plot(freq, spectral_power)
     plt.plot(p_freq, p_power, 'r*', markersize=4)
     plt.show()

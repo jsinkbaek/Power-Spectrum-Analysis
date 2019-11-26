@@ -40,10 +40,13 @@ res_pos = result[len(result)//2:-1]
 spectral_power = res_pos.real ** 2 + res_pos.imag ** 2
 
 plt.figure()
-plt.plot(freq / muHz, spectral_power)
+plt.plot(freq / muHz / 11.57, spectral_power)
 # plt.plot(res_pos.real, 'r--', linewidth=0.3)
 # plt.plot(res_pos.imag, 'b--', linewidth=0.3)
-plt.xlabel('Frequency [muHz]')
+#plt.xlabel('Frequency [muHz]')
+plt.xlabel('Frequency [1/days]')
+plt.xlim([0.04, 1.7])
+plt.ylim([-10, 1.34*10**11])
 plt.ylabel('Power')
 plt.show()
 
@@ -62,7 +65,7 @@ window = None
 mph_set = [0.0002, 2, 12]  # sun, star2, nuindi
 # mph = 0.0002  # golf (sun)
 # mph = mph_set[dataset]
-mph = 1.4 * 10**9
+mph = 0.1 * 10**9
 p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 200, halfwidth, resolution, window, mph=mph)
 
 try:
