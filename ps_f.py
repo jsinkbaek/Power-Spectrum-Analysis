@@ -23,7 +23,7 @@ def reader(fname):
     return np.array_split(arr, len(arr[0, :]), axis=1)
 
 
-def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=np.longdouble):
+def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=np.double):
     pi = math.pi
     t1 = tm.time()
     # # Prepare input for use
@@ -79,16 +79,17 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
         sincos = np.zeros(step_amnt)
 
         freq = np.ascontiguousarray(freq)
+        t = np.ascontiguousarray(t)
 
         # Recurrence sine and cosine difference product
         s_diff = np.sin(resolution * t, dtype=dtype)
         c_diff = np.cos(resolution * t, dtype=dtype)
 
-        # # # # # Calculation matrices # # # # #
-        # use [c0, s0][c_diff, s_diff; -s_diff, c_diff]  (inverted in calc for .T)
-        # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and
-        # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981
-        # # # # # # # # # #  # # # # # # # # # #
+        # # # # # Calculation matrices # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # use [c0, s0][c_diff, s_diff; -s_diff, c_diff]  (inverted in calc for .T)         #
+        # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and  #
+        # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981      #
+        # # # # # # # # # #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         calc_base = np.array([[c_diff, -s_diff], [s_diff, c_diff]]).T
         print('calc_base.shape', calc_base.shape)
