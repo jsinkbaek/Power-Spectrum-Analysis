@@ -169,5 +169,5 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
     plt.plot(p_freq, p_power, 'r*', markersize=4)
     plt.show()
     # Save peaks found by cleaning in .dat file
-    ps_f.writer('clean_peaks', p_freq, p_power)
+    ps_f.writer('clean_peaks_cuda', p_freq, p_power)
     return p_freq, p_power, p_alpha, p_beta
