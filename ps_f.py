@@ -154,9 +154,12 @@ def create_pspectrum(y, t, freq_centre, half_width, resolution, chunk_size=100, 
     return results
 
 
-def create_pspectrum_cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=np.double):
+def create_pspectrum_cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
     # # Uses cupy (cuda numpy) instead of numpy # #
     import cupy as cu
+    if dtype is None:
+        dtype = cu.double
+
     pi = math.pi
     t1 = tm.time()
 
