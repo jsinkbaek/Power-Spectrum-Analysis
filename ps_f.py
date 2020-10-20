@@ -9,6 +9,7 @@ import os
 import time as tm
 from detect_peaks import detect_peaks
 import matplotlib.pyplot as plt
+import create_pspectrum
 
 
 def writer(fname, *args):
@@ -20,5 +21,46 @@ def reader(fname):
     fname = os.path.join('Datafiles', fname + '.dat')
     arr = np.loadtxt(fname)
     return np.array_split(arr, len(arr[0, :]), axis=1)
+
+
+def optimal_resolution(t, initial_resolution, sfreq, half_width=None):
+    """
+    Finds a more optimal frequency resolution to reduce the amount of noise introduced
+    in the spectrum. Does it by simulating a sine function sampled similarly to the data set
+    and examines how the spectral response of it is at different power spectrum resolutions.
+    Assumes that the sine frequency used is not very significant for the result. As a sine
+    frequency, the frequency of maximum power could be used.
+    """
+    if half_width is None:
+        half_width = sfreq - sfreq/100
+    yt = np.sin(2*math.pi*sfreq*t)
+    # Initial
+    pres = create_pspectrum.numpy(yt, t, freq_centre=sfreq, half_width=half_width, resolution=initial_resolution)
+    freq_i = pres[0]
+    power_i = pres[1]
+    # Find area under the curve (sum the power spectrum)
+    area_i = np.sum(power_i)
+    best_area = area_i
+    best_res = initial_resolution
+    best_freq = freq_i
+    best_p = power_i
+
+    # # # Loop to examine # # # #
+    resolution = np.linspace(0.5*initial_resolution, 1.5*initial_resolution, 100)
+    for current_res in resolution:
+        pres = create_pspectrum.numpy(yt, t, freq_centre=sfreq, half_width=half_width, resolution=current_res)
+        current_power = pres[1]
+        current_area = np.sum(current_power)
+        if current_area < best_area:
+            best_area = current_area
+            best_res = current_res
+            best_freq = pres[0]
+            best_p = pres[1]
+
+    print('Best resolution: ', best_res)
+    print('Initial resolution: ', initial_resolution)
+    plt.plot(freq_i, power_i, '--')
+    plt.plot(best_freq, best_p)
+
 
 
