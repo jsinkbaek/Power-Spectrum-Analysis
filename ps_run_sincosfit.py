@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import cupy as cu
 import numpy as np
 import time as tm
+import create_pspectrum
 # import as_f
 plt.rcParams.update({'font.size': 25})  # Changes font size for all plots
 
@@ -23,8 +24,8 @@ halfwidth = 6000 * muFreqUnit  # (betelgeuse 20)
 steps = int((2 * halfwidth) / resolution)
 
 # # Spectrum calculation from sine cosine least squares fitting (betelgeuse 20.02 * muFreqUnit)
-results = ps_f.create_pspectrum_cuda(flux, time, [6005 * muFreqUnit], halfwidth, resolution, chunk_size=100,
-                                     dtype=cu.double)[0]
+results = create_pspectrum.cuda(flux, time, [6005 * muFreqUnit], halfwidth, resolution, chunk_size=100,
+                                dtype=cu.double)[0]
 freq, spectral_power = results[0], results[1]
 
 plt.plot(freq, spectral_power)

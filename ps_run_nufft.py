@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import nufftpy
 import numpy as np
 import time as tm
+import clean_procedure
 import as_f
 
 # # Input an call to load data set from file
@@ -59,7 +60,7 @@ window = window_set[dataset]
 # Call ps_f.clean_procedure
 mph_set = [0.0002, 4, 12, 0.2 * 10**9]  # sun, star2, nuindi, betelgeuse
 mph = mph_set[dataset]
-p_freq, p_power, p_a, p_b = ps_f.clean_procedure(time, flux, 200, halfwidth, resolution, window, mph=mph)
+p_freq, p_power, p_a, p_b = clean_procedure.nufft(time, flux, 200, halfwidth, resolution, window, mph=mph)
 
 try:
     print(len(p_freq))
