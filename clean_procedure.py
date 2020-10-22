@@ -210,8 +210,6 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
     p_alpha = []
     p_beta = []
     freq_centre = [freq_centre]
-    # Get amount of frequency steps wanted
-    steps = int((2 * half_width) / resolution)
     # Make carbon copy of signal for manipulation
     y_copy = np.copy(y)
 
