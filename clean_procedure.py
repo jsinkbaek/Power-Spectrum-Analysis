@@ -3,7 +3,6 @@ import time as tm
 from detect_peaks import detect_peaks
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 import create_pspectrum
 
 
@@ -64,10 +63,7 @@ def nufft(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
         # plt.show(block=False)
 
         # Calculate harmonic signal corresponding to highest peak in power spectrum
-        best_vals = harmonic_fit(t, y_copy, max_freq, max_alpha, max_beta, 0, 0)
-        #  max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
-        max_signal = (best_vals[0] * np.cos(2 * np.pi * max_freq * t + best_vals[2]) +
-                      best_vals[1] * np.sin(2 * np.pi * max_freq * t + best_vals[3]))
+        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
 
         # plt.plot(t, y_copy, linewidth=0.5)
         # plt.plot(t, max_signal, '--', linewidth=0.3)
@@ -172,10 +168,7 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=1
             break
 
         # # # Calculate harmonic signal corresponding to highest peak in power spectrum # # #
-        best_vals = harmonic_fit(t, y_copy, max_freq, max_alpha, max_beta, 0, 0)
-        #  max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
-        max_signal = (best_vals[0] * np.cos(2 * np.pi * max_freq * t + best_vals[2]) +
-                      best_vals[1] * np.sin(2 * np.pi * max_freq * t + best_vals[3]))
+        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
 
         # # Subtract calculated signal from y_copy and save the peak used # #
         y_copy -= max_signal
@@ -244,10 +237,8 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
             break
 
         # Calculate harmonic signal corresponding to highest peak in power spectrum
-        best_vals = harmonic_fit(t, y_copy, max_freq, max_alpha, max_beta, 0, 0)
-        #  max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
-        max_signal = (best_vals[0]*np.cos(2*np.pi*max_freq*t+best_vals[2]) +
-                      best_vals[1]*np.sin(2*np.pi*max_freq*t+best_vals[3]))
+        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
+
         # # Subtract calculated signal from y_copy and save the peak used # #
         y_copy -= max_signal
         p_power.append(max_power)
@@ -270,15 +261,3 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
     # Save peaks found by cleaning in .dat file
     ps_f.writer('clean_peaks_cuda', p_freq, p_power)
     return p_freq, p_power, p_alpha, p_beta
-
-
-def harmonic_fit(t, y, freq, alpha_guess, beta_guess, phase_a_guess, phase_b_guess):
-    def func(x, alpha, beta, phase_a, phase_b):
-        return harmonic_function(x, freq, alpha, beta, phase_a, phase_b)
-    init_vals = [alpha_guess, beta_guess, phase_a_guess, phase_b_guess]
-    best_vals, covar = curve_fit(func, t, y, p0=init_vals)
-    return best_vals, covar
-
-
-def harmonic_function(x, freq, alpha, beta, phase_a, phase_b):
-    return alpha * np.cos(2*np.pi*freq*x + phase_a) + beta * np.sin(2*np.pi*freq*x + phase_b)
