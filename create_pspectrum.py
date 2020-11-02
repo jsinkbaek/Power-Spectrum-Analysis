@@ -5,7 +5,7 @@ from detect_peaks import detect_peaks
 import matplotlib.pyplot as plt
 
 
-def numpy(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=np.double):
+def numpy(y, t, freq_centre, half_width, resolution, chunk_size=50, dtype=np.double):
     """
     Calculate powerspectrum using matrix multiplication with numpy
     """
@@ -38,7 +38,7 @@ def numpy(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=np.do
     # # # # Run for loop for all frequencies indicated by length of freq_centre # # # #
     for k in range(0, len(freq_centre)):
         # Show numpy config to check which BLAS is used
-        np.__config__.show()
+        # np.__config__.show()
 
         # Get current frequency centre
         freq_centre_current = freq_centre[k]
@@ -257,3 +257,14 @@ def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
     t2 = tm.time()
     print('Total time elapsed create_pspectrum_cuda: ', t2-t1, ' seconds')
     return results
+
+
+def nufftpy(y, t, half_width, resolution):
+    import nufftpy as nfpy
+    steps = int((2*half_width)/resolution)
+    freq = nfpy.nufftfreqs(steps, df=resolution)
+    freq = freq[len(freq)//2:-1]
+    harmonic_content = nfpy.nufft1(t, y, steps, df=(resolution*2*math.pi))
+    harmonic_content = harmonic_content[len(harmonic_content)//2:-1]
+
+    return [freq, harmonic_content.real**2+harmonic_content.imag**2, harmonic_content.real, harmonic_content.imag]

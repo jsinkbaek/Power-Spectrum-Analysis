@@ -101,7 +101,7 @@ def nufft(t, y, n_iter, halfwidth, resolution, window=None, mph=1):
     return p_freq, p_power, p_alpha, p_beta
 
 
-def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=10, chunk_size=100, window=None, mph=1):
+def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width, chunk_size=100, window=None, mph=1):
     """
     CLEAN procedure using numpy matrix multiplication on a small frequency range, using nufftpy to find the approximate
     frequency of the highest peak beforehand.
@@ -114,7 +114,7 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=1
     p_beta = []
     freq_centre = [freq_centre]
     # Get amount of frequency steps for nufft1
-    steps = int((2 * fft_half_width) / resolution)
+    steps = 2 * int((2 * fft_half_width) / resolution)
     # Make carbon copy of signal for manipulation
     y_copy = np.copy(y)
 
@@ -129,25 +129,28 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=1
         # Call nufft1 to perform nufft calculation
         harmonic_content = nufftpy.nufft1(t, y_copy, steps, df=(resolution * 2 * np.pi))
         harmonic_content = harmonic_content[len(harmonic_content) // 2:-1]
-        spectral_power = harmonic_content.real ** 2 + harmonic_content.imag ** 2
+        spectral_power_fft = harmonic_content.real ** 2 + harmonic_content.imag ** 2
         # Detect peaks in power spectrum, and find power, frequency, alpha and beta values
-        peaks = detect_peaks(spectral_power, mph=mph)
-        peaks_power = spectral_power[peaks]
+        peaks = detect_peaks(spectral_power_fft, mph=mph)
+        peaks_power = spectral_power_fft[peaks]
         peaks_freq = freq[peaks]
         # Find highest peak
         try:
             max_indx = np.argmax(peaks_power)
             max_freq = peaks_freq[max_indx]
         except ValueError:
+            print('no more peaks, i = ', i)
             break
         t2 = tm.time()
         print('fft time: ', t2-t1)
 
         # # # Do sine-cosine fitting to estimate power spectrum using numpy matrix multiplication # # #
-        spectral_res = create_pspectrum.numpy(y_copy, t, half_width=np_half_width, freq_centre=max_freq,
-                                              resolution=resolution, chunk_size=chunk_size)
+        spectral_res = create_pspectrum.numpy(y_copy, t, half_width=np_half_width, freq_centre=[max_freq],
+                                              resolution=resolution, chunk_size=1000)
+        spectral_res=spectral_res[0]
         spectral_power = spectral_res[1]
         # cut data to window
+        window = None
         if window is None:
             window = range(0, len(spectral_power))
         spectral_power = spectral_power[window]
@@ -167,8 +170,17 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=1
         except ValueError:
             break
 
+        # plt.figure()
+        # plt.plot(freq / 0.000001, spectral_power_fft*4)
+        # plt.plot(peaks_freq / 0.000001, peaks_power, 'r*', markersize=4)
+        # plt.plot(max_freq / 0.000001, max_power, 'b*', markersize=6)
+        # plt.show(block=True)
+
         # # # Calculate harmonic signal corresponding to highest peak in power spectrum # # #
-        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
+        max_signal = (max_beta * np.cos(2*np.pi*max_freq * t) + max_alpha * np.sin(2*np.pi*max_freq * t))
+        # plt.plot(t, y_copy)
+        # plt.plot(t, max_signal, 'r--')
+        # plt.show()
 
         # # Subtract calculated signal from y_copy and save the peak used # #
         y_copy -= max_signal
@@ -183,10 +195,12 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width=1
     # Calculate original power spectrum
     spectral_res = create_pspectrum.numpy(y, t, freq_centre=freq_centre, half_width=fft_half_width,
                                           resolution=resolution, chunk_size=chunk_size)
+    spectral_res = spectral_res[0]
+    p_freq = np.asarray(p_freq)
     # Plot spectrum and found peaks
     plt.figure()
-    plt.plot(spectral_res[0], spectral_res[1])
-    plt.plot(p_freq, p_power, 'r*', markersize=4)
+    plt.plot(spectral_res[0] / 0.000001, spectral_res[1])
+    plt.plot(p_freq / 0.000001, p_power, 'r*', markersize=4)
     plt.show()
     # Save peaks found by cleaning in .dat file
     ps_f.writer('clean_peaks_numpy', p_freq, p_power)
@@ -237,7 +251,7 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
             break
 
         # Calculate harmonic signal corresponding to highest peak in power spectrum
-        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t)) * 2
+        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t))
 
         # # Subtract calculated signal from y_copy and save the peak used # #
         y_copy -= max_signal
