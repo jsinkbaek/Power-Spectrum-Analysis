@@ -219,6 +219,7 @@ def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
                 dif = end - step_amnt
                 calc_mat = cu.asnumpy(calc_mat)
                 calc_mat = np.delete(calc_mat, range(chunk_size - dif, chunk_size), 0)
+                calc_mat = cu.array(calc_mat)
                 calc_mat = cu.ascontiguousarray(calc_mat)
                 end = step_amnt
                 chunk_size = end - i
