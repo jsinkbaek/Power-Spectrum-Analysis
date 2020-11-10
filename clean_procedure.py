@@ -207,7 +207,7 @@ def numpy(t, y, n_iter, freq_centre, fft_half_width, resolution, np_half_width, 
     return p_freq, p_power, p_alpha, p_beta
 
 
-def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, window=None, mph=1):
+def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=1000, window=None, mph=1):
     """
     CLEAN procedure utilizing create_pspectrum.cuda
     """
@@ -226,7 +226,7 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
 
         # # Perform sine-cosine fit with gpu to get power spectrum # #
         spectral_res = create_pspectrum.cuda(y_copy, t, freq_centre=freq_centre, half_width=half_width,
-                                             resolution=resolution, chunk_size=chunk_size)
+                                             resolution=resolution, chunk_size=chunk_size, silent=True)[0]
         spectral_power = spectral_res[1]
         # cut data to window
         if window is None:
@@ -249,16 +249,21 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
             max_beta = peaks_beta[max_indx]
         except ValueError:
             break
-
+        if i < 20 or i > 40:
+            plt.figure()
+            plt.plot(spectral_res[0], spectral_power)
+            plt.plot(max_freq, max_power, 'r*')
+            plt.title('Peak ' + str(i))
+            plt.show(block=False)
         # Calculate harmonic signal corresponding to highest peak in power spectrum
-        max_signal = (max_alpha * np.cos(2*np.pi*max_freq * t) + max_beta * np.sin(2*np.pi*max_freq * t))
+        max_signal = (max_beta * np.cos(2*np.pi*max_freq * t) + max_alpha * np.sin(2*np.pi*max_freq * t))
 
         # # Subtract calculated signal from y_copy and save the peak used # #
         y_copy -= max_signal
         p_power.append(max_power)
         p_alpha.append(max_alpha)
         p_beta.append(max_beta)
-        p_freq.append(max_freq)
+        p_freq.append(max_freq / 0.000001)
 
         t2 = tm.time()
         print(t2-t1)
@@ -266,10 +271,10 @@ def cuda(t, y, n_iter, freq_centre, half_width, resolution, chunk_size=100, wind
     # # # # Results # # # #
     # Calculate original power spectrum
     spectral_res = create_pspectrum.cuda(y, t, freq_centre=freq_centre, half_width=half_width, resolution=resolution,
-                                         chunk_size=chunk_size)
+                                         chunk_size=chunk_size, silent=True)[0]
     # Plot spectrum and found peaks
     plt.figure()
-    plt.plot(spectral_res[0], spectral_res[1])
+    plt.plot(spectral_res[0] / 0.000001, spectral_res[1])
     plt.plot(p_freq, p_power, 'r*', markersize=4)
     plt.show()
     # Save peaks found by cleaning in .dat file

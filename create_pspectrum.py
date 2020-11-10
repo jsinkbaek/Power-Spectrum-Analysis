@@ -53,9 +53,6 @@ def numpy(y, t, freq_centre, half_width, resolution, chunk_size=50, dtype=np.dou
         # # Zhu Li, do the thing
 
         # Calculate sine and cosine function part values
-        print(freq.shape)
-        print(t.shape)
-
         sin = np.zeros(step_amnt)
         cos = np.zeros(step_amnt)
         sin2 = np.zeros(step_amnt)
@@ -76,7 +73,6 @@ def numpy(y, t, freq_centre, half_width, resolution, chunk_size=50, dtype=np.dou
         # # # # # # # # # #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         calc_base = np.array([[c_diff, -s_diff], [s_diff, c_diff]]).T
-        print('calc_base.shape', calc_base.shape)
         calc_mat = np.zeros((chunk_size, lent, 2, 2))
         calc_mat[0, :, :, :] = calc_base
 
@@ -139,7 +135,7 @@ def numpy(y, t, freq_centre, half_width, resolution, chunk_size=50, dtype=np.dou
     return results
 
 
-def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
+def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None, silent=False):
     """
     Calculate powerspectrum using matrix multiplication with cupy (CUDA numpy)
     """
@@ -224,7 +220,8 @@ def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
                 end = step_amnt
                 chunk_size = end - i
 
-            print('Current chunk ', i, ':', end, ' of ', step_amnt)
+            if not silent:
+                print('Current chunk ', i, ':', end, ' of ', step_amnt)
             # Original point calculation
             s0 = cu.sin(freq[i] * t, dtype=dtype)
             c0 = cu.cos(freq[i] * t, dtype=dtype)
@@ -256,7 +253,10 @@ def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None):
         # Save data in results
         results[k] = [freq, power, alpha, beta]
     t2 = tm.time()
-    print('Total time elapsed create_pspectrum_cuda: ', t2-t1, ' seconds')
+    # Change freq_centre back to cyclic frequencies
+    freq_centre[:] = [x / (2 * pi) for x in freq_centre]
+    if not silent:
+        print('Total time elapsed create_pspectrum_cuda: ', t2-t1, ' seconds')
     return results
 
 

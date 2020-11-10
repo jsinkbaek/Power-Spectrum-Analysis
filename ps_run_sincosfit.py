@@ -1,6 +1,6 @@
 import ps_f
 import matplotlib.pyplot as plt
-# import cupy as cu
+import cupy as cu
 import numpy as np
 import time as tm
 import create_pspectrum
@@ -27,11 +27,11 @@ halfwidth = 500 * muFreqUnit  # (betelgeuse 20)
 steps = int((2 * halfwidth) / resolution)
 
 # # Spectrum calculation from sine cosine least squares fitting (betelgeuse 20.02 * muFreqUnit)
-# results = create_pspectrum.cuda(flux, time, [6005 * muFreqUnit], halfwidth, resolution, chunk_size=100,
-#                                dtype=cu.double)[0]
+results = create_pspectrum.cuda(flux, time, [505 * muFreqUnit], halfwidth, resolution, chunk_size=2000,
+                                dtype=cu.double)[0]
 # results = create_pspectrum.numpy(flux, time, [(halfwidth+5) * muFreqUnit], halfwidth, resolution, chunk_size=500,
 #                                 dtype=np.double)[0]
-results = create_pspectrum.nufftpy(flux, time, half_width=2*halfwidth, resolution=resolution)
+# results = create_pspectrum.nufftpy(flux, time, half_width=2*halfwidth, resolution=resolution)
 freq, spectral_power = results[0], results[1]
 
 plt.plot(freq / muFreqUnit, spectral_power)
@@ -40,21 +40,22 @@ plt.plot(freq / muFreqUnit, spectral_power)
 plt.ylabel('Power')
 plt.xlabel('muHz')
 plt.legend(['sine/cosine fitting'])
-plt.show()
+plt.show(block=False)
 
 # Estimate best resolution
 resolution = ps_f.optimal_resolution(time, resolution, sfreq=halfwidth, half_width=10*muFreqUnit,
-                                     chunk_size=2000)
+                                     chunk_size=2000, block=False)
 
 # # Perform CLEAN procedure # #
 # window = range(1665000, 5271000)
-window = range(200000, 990000)
+# window = range(200000, 990000)
 # mph = 0.00002
 mph = 4
-print('test')
-p_freq, p_power, p_a, p_b = clean_procedure.numpy(time, flux, n_iter=50, freq_centre=(halfwidth+5*muFreqUnit),
-                                                  resolution=resolution, window=window, mph=mph,
-                                                  fft_half_width=halfwidth, chunk_size=2000, np_half_width=5*muFreqUnit)
+p_freq, p_power, p_a, p_b = clean_procedure.cuda(time, flux, n_iter=20, freq_centre=(halfwidth+5*muFreqUnit),
+                                                 resolution=resolution, mph=mph, half_width=halfwidth, chunk_size=2000)
+# p_freq, p_power, p_a, p_b = clean_procedure.numpy(time, flux, n_iter=50, freq_centre=(halfwidth+5*muFreqUnit),
+#                                                  resolution=resolution, window=window, mph=mph,
+#                                                 fft_half_width=halfwidth, chunk_size=2000, np_half_width=5*muFreqUnit)
 try:
     print(len(p_freq))
     print(len(p_power))

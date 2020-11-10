@@ -23,7 +23,7 @@ def reader(fname):
     return np.array_split(arr, len(arr[0, :]), axis=1)
 
 
-def optimal_resolution(t, initial_resolution, sfreq, half_width=None, chunk_size=100):
+def optimal_resolution(t, initial_resolution, sfreq, half_width=None, chunk_size=100, block=True):
     """
     Finds a more optimal frequency resolution to reduce the amount of noise introduced
     in the spectrum. Does it by simulating a sine function sampled similarly to the data set
@@ -35,9 +35,9 @@ def optimal_resolution(t, initial_resolution, sfreq, half_width=None, chunk_size
         half_width = sfreq - sfreq/100
     yt = np.sin(2*math.pi*sfreq*t)
     # Initial
-    #pres = create_pspectrum.numpy(yt, t, freq_centre=[sfreq], half_width=half_width, resolution=initial_resolution,
-    #                              chunk_size=chunk_size)
-    pres = create_pspectrum.nufftpy(yt, t, half_width=half_width, resolution=initial_resolution)
+    pres = create_pspectrum.cuda(yt, t, freq_centre=[sfreq], half_width=half_width, resolution=initial_resolution,
+                                 chunk_size=chunk_size)[0]
+    # pres = create_pspectrum.nufftpy(yt, t, half_width=half_width, resolution=initial_resolution)
     freq_i = pres[0]
     power_i = pres[1]
     # Find area under the curve (sum the power spectrum)
@@ -63,9 +63,10 @@ def optimal_resolution(t, initial_resolution, sfreq, half_width=None, chunk_size
 
     print('Best resolution: ', best_res)
     print('Initial resolution: ', initial_resolution)
+    plt.figure()
     plt.plot(freq_i/0.000001, power_i, '--')
     plt.plot(best_freq/0.000001, best_p)
-    plt.show()
+    plt.show(block=block)
     return best_res
 
 
