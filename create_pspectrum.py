@@ -260,6 +260,146 @@ def cuda(y, t, freq_centre, half_width, resolution, chunk_size=100, dtype=None, 
     return results
 
 
+def numpar(y, t, freq_centre, half_width, resolution, chunk_size=50, dtype=np.double, n_jobs=2):
+    from joblib import Parallel, delayed
+    pi = math.pi
+    t1 = tm.time()
+    # # Prepare input for use
+
+    # Convert input to numpy array (if not already)
+    y = np.asarray(y)
+    t = np.asarray(t)
+
+    # Change to angular frequencies (assumes input is in cyclic frequencies)
+    freq_centre[:] = [x * (2 * pi) for x in freq_centre]
+    half_width = half_width * 2 * pi
+    resolution = resolution * 2 * pi
+
+    # Data mean subtraction, to reduce potentially constant elements
+    y_mean = np.mean(y, dtype=dtype)
+    y = y - y_mean
+    t = t - np.min(t)  # To get first element in t to be 0
+
+    # # Prepare for for-loop
+
+    # Preload results list
+    results = [None] * len(freq_centre)
+
+    # Set amount of steps (might be subject to rounding error)
+    step_amnt = int((2 * half_width) / resolution)
+
+    # # # # Run for loop for all frequencies indicated by length of freq_centre # # # #
+    for k in range(0, len(freq_centre)):
+        # Show numpy config to check which BLAS is used
+        # np.__config__.show()
+
+        # Get current frequency centre
+        freq_centre_current = freq_centre[k]
+
+        # Create frequency steps
+        freq = np.linspace(freq_centre_current - half_width, freq_centre_current + half_width, step_amnt, dtype=dtype)
+
+        # Reshape freq and t in order to do matrix multiplication
+        freq = np.reshape(freq, (len(freq), 1))
+        lent = len(t)
+
+        # # Zhu Li, do the thing
+
+        # Calculate sine and cosine function part values
+        sin = np.zeros(step_amnt)
+        cos = np.zeros(step_amnt)
+        sin2 = np.zeros(step_amnt)
+        cos2 = np.zeros(step_amnt)
+        sincos = np.zeros(step_amnt)
+
+        freq = np.ascontiguousarray(freq)
+        t = np.ascontiguousarray(t)
+
+        # Recurrence sine and cosine difference product
+        s_diff = np.sin(resolution * t, dtype=dtype)
+        c_diff = np.cos(resolution * t, dtype=dtype)
+
+        # # # # # Calculation matrices # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # use [c0, s0][c_diff, s_diff; -s_diff, c_diff]  (inverted in calc for .T)         #
+        # Recurrence based on s_m = c_(m-1)*sin(deltaf * t) + s_(m-1)*cos(deltaf * t) and  #
+        # c_m = c_(m-1)*cos(deltaf * t) - s_(m-1)*sin(deltaf * t) from T. Ponman 1981      #
+        # # # # # # # # # #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+        calc_base = np.array([[c_diff, -s_diff], [s_diff, c_diff]]).T
+        calc_mat = np.zeros((chunk_size, lent, 2, 2))
+        calc_mat[0, :, :, :] = calc_base
+
+        # Generates the necessary matrices (multiplied) for each frequency point based on the original point
+        for i in range(1, chunk_size):
+            calc_mat[i, :, :, :] = np.matmul(calc_mat[i - 1, :, :, :], calc_base)
+
+        # Convert large matrix arrays to contigous arrays
+        calc_mat = np.ascontiguousarray(calc_mat)
+
+        # Calculates sine and cosine values
+        parres = Parallel(n_jobs=n_jobs)(delayed(__process_input)(i, chunk_size, calc_mat, step_amnt, dtype, freq, lent,
+                                                                  t, y)
+                                         for i in range(0, step_amnt, chunk_size))
+        for x in parres:
+            [i, end, sin_temp, cos_temp, sin2_temp, cos2_temp, sincos_temp] = x
+            sin[i:end] = sin_temp
+            sin2[i:end] = sin2_temp
+            cos[i:end] = cos_temp
+            cos2[i:end] = cos2_temp
+            sincos[i:end] = sincos_temp
+
+        # # Calculate alpha and beta components of spectrum, and from them, power of spectrum
+        alpha = (sin * cos2 - cos * sincos) / (sin2 * cos2 - sincos ** 2)
+        beta = (cos * sin2 - sin * sincos) / (sin2 * cos2 - sincos ** 2)
+
+        power = alpha ** 2 + beta ** 2
+
+        # # Last loop steps
+
+        # Convert frequency back to cyclic units
+        freq = freq / (2 * pi)
+
+        # Save data in results
+        results[k] = [freq, power, alpha, beta]
+    t2 = tm.time()
+    print('Total time elapsed: ', t2 - t1, ' seconds')
+
+    return results
+
+
+def __process_input(i, chunk_size, calc_mat, step_amnt, dtype, freq, lent, t, y):
+    end = i + chunk_size
+    if end > step_amnt:
+        dif = end - step_amnt
+        calc_mat = np.delete(calc_mat, range(chunk_size - dif, chunk_size), 0)
+        end = step_amnt
+        chunk_size = end - i
+
+    print('Current chunk ', i, ':', end, ' of ', step_amnt)
+
+    # Original point calculation
+    s0 = np.sin(freq[i] * t, dtype=dtype)
+    c0 = np.cos(freq[i] * t, dtype=dtype)
+
+    # Sine/cosine vector initialization (for matmul calculation, see c0, s0 before loop)
+    trig_vec = np.zeros((1, lent, 1, 2))
+    trig_vec[0, :, 0, 0] = c0
+    trig_vec[0, :, 0, 1] = s0
+    trig_vec = np.repeat(trig_vec, chunk_size, axis=0)
+
+    # Matrix calculations)
+    matrix_result = np.matmul(trig_vec, calc_mat)
+    sin_temp = matrix_result[:, :, 0, 1]
+    cos_temp = matrix_result[:, :, 0, 0]
+    sin = np.sum(y * sin_temp, 1)
+    cos = np.sum(y * cos_temp, 1)
+    sin2 = np.sum(sin_temp ** 2, 1)
+    cos2 = np.sum(cos_temp ** 2, 1)
+    sincos = np.sum(sin_temp * cos_temp, 1)
+
+    return [i, end, sin, cos, sin2, cos2, sincos]
+
+
 def nufftpy(y, t, half_width, resolution):
     import nufftpy as nfpy
     steps = int((2*half_width)/resolution)
